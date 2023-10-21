@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import json
 import opennre
-from opennre import encoder, model, framework
+from opennre import model, framework
 import sys
 import os
 import argparse
@@ -11,6 +11,8 @@ import logging
 import random
 from pathlib import Path
 from datetime import datetime
+
+from mlxtend.plotting import plot_confusion_matrix
 
 def set_seed(seed):
     random.seed(seed)
@@ -169,6 +171,9 @@ for i in range(args.trials):
     framework.load_state_dict(torch.load(ckpt)['state_dict'])
     result = framework.eval_model(framework.test_loader)
 
+    with open(DATETIME_PATH / f'results_{i+1}.txt', 'w') as results_file:
+        results_file.write(str(result))
+
     # Print the result
     logging.info('Test set results:')
     logging.info('Accuracy: {}'.format(result['acc']))
@@ -177,3 +182,10 @@ for i in range(args.trials):
     logging.info('Micro F1: {}'.format(result['micro_f1']))
     logging.info('Macro F1: {}'.format(result['macro_f1']))
     logging.info('Weighted F1: {}'.format(result['weighted_f1']))
+
+    fig, _ = plot_confusion_matrix(
+        conf_mat=result['confusion_matrix'],
+        class_names=rel2id,
+        figsize=(10, 7)
+    )
+    fig.savefig(DATETIME_PATH / f'confusion_matrix_{i+1}.png')

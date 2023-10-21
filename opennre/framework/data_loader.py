@@ -128,7 +128,9 @@ class SentenceREDataset(data.Dataset):
             macro_f1 = sklearn.metrics.f1_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='macro')
             weighted_f1 = sklearn.metrics.f1_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='weighted')
 
-        result = {'acc': acc, 'micro_p': micro_p, 'micro_r': micro_r, 'micro_f1': micro_f1, 'macro_f1': macro_f1, 'weighted_f1': weighted_f1}
+        confusion_matrix = sklearn.metrics.confusion_matrix(goldens, pred_result)
+
+        result = {'acc': acc, 'micro_p': micro_p, 'micro_r': micro_r, 'micro_f1': micro_f1, 'macro_f1': macro_f1, 'weighted_f1': weighted_f1, 'confusion_matrix': confusion_matrix}
         logging.info('Evaluation result: {}.'.format(result))
         return result
     
