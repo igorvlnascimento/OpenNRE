@@ -50,7 +50,7 @@ class SentenceREDataset(data.Dataset):
             batch_seqs.append(torch.cat(seq, 0)) # (B, L)
         return [batch_labels] + batch_seqs
     
-    def eval(self, pred_result, use_name=False):
+    def eval(self, pred_result, use_name=False, use_neg=True):
         """
         Args:
             pred_result: a list of predicted label (id)
@@ -61,17 +61,35 @@ class SentenceREDataset(data.Dataset):
         """
         correct = 0
         total = len(self.data)
-        correct_positive = 0
-        pred_positive = 0
-        gold_positive = 0
+        goldens = [self.rel2id[self.data[k]['relation']] for k in range(total)]
+
+        number_class_id_0 = sum([self.rel2id[self.data[k]['relation']] == 0 for k in range(total)])
+
+        number_per_class = {}
+        for k in range(total):
+            class_id = self.rel2id[self.data[k]['relation']]
+            if class_id in number_per_class:
+                number_per_class[class_id] += 1
+            else:
+                number_per_class[class_id] = 1
+
+        assert number_per_class[0] == number_class_id_0
+        
+        correct_positive = {k:0 for k in range(len(self.rel2id))}
+        pred_positive = {k:0 for k in range(len(self.rel2id))}
+        gold_positive = {k:0 for k in range(len(self.rel2id))}
+        false_positive = {k:0 for k in range(len(self.rel2id))}
+        false_negative = {k:0 for k in range(len(self.rel2id))}
+        f1_score_per_class = {k:0 for k in range(len(self.rel2id))}
         neg = -1
-        for name in ['NA', 'na', 'no_relation', 'Other', 'Others']:
-            if name in self.rel2id:
-                if use_name:
-                    neg = name
-                else:
-                    neg = self.rel2id[name]
-                break
+        if use_neg:
+            for name in ['NA', 'na', 'no_relation', 'Other', 'Others']:
+                if name in self.rel2id:
+                    if use_name:
+                        neg = name
+                    else:
+                        neg = self.rel2id[name]
+                    break
         for i in range(total):
             if use_name:
                 golden = self.data[i]['relation']
@@ -80,25 +98,37 @@ class SentenceREDataset(data.Dataset):
             if golden == pred_result[i]:
                 correct += 1
                 if golden != neg:
-                    correct_positive += 1
+                    correct_positive[golden] += 1
+            else:
+                false_positive[pred_result[i]] += 1
+                false_negative[golden] += 1
             if golden != neg:
-                gold_positive +=1
+                gold_positive[golden] +=1
             if pred_result[i] != neg:
-                pred_positive += 1
+                pred_positive[golden] += 1
+        f1_score_per_class = {
+            k:
+            correct_positive[k] / (correct_positive[k] + 1/2 * (false_positive[k] + false_negative[k]))
+            if correct_positive[k] + 1/2 * (false_positive[k] + false_negative[k])
+            else 0
+            for k, _ in f1_score_per_class.items()
+        }
         acc = float(correct) / float(total)
-        try:
-            micro_p = float(correct_positive) / float(pred_positive)
-        except:
-            micro_p = 0
-        try:
-            micro_r = float(correct_positive) / float(gold_positive)
-        except:
-            micro_r = 0
-        try:
-            micro_f1 = 2 * micro_p * micro_r / (micro_p + micro_r)
-        except:
-            micro_f1 = 0
-        result = {'acc': acc, 'micro_p': micro_p, 'micro_r': micro_r, 'micro_f1': micro_f1}
+
+        if use_neg:
+            micro_p = float(sum(correct_positive.values())) / float(sum(pred_positive.values())) if float(sum(pred_positive.values())) else 0
+            micro_r = float(sum(correct_positive.values())) / float(sum(gold_positive.values())) if float(sum(gold_positive.values())) else 0
+            micro_f1 = sum(correct_positive.values()) / sum(pred_positive.values()) if sum(pred_positive.values()) else 0
+            macro_f1 = sum(f1_score_per_class.values()) / len(f1_score_per_class)
+            weighted_f1 = sum([f1 * (number_per_class[i]/total) for i, f1 in list(f1_score_per_class.items())])
+        else:
+            micro_p = sklearn.metrics.precision_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='micro')
+            micro_r = sklearn.metrics.recall_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='micro')
+            micro_f1 = sklearn.metrics.f1_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='micro')
+            macro_f1 = sklearn.metrics.f1_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='macro')
+            weighted_f1 = sklearn.metrics.f1_score(goldens, pred_result, labels=list(range(len(self.rel2id))), average='weighted')
+
+        result = {'acc': acc, 'micro_p': micro_p, 'micro_r': micro_r, 'micro_f1': micro_f1, 'macro_f1': macro_f1, 'weighted_f1': weighted_f1}
         logging.info('Evaluation result: {}.'.format(result))
         return result
     

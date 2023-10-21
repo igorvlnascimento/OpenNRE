@@ -150,8 +150,10 @@ result = framework.eval_model(framework.test_loader)
 # Print the result
 logging.info('Test set results:')
 if args.metric == 'acc':
-    logging.info('Accuracy: {}'.format(result['acc']))
+    logging.info(f"Accuracy: {result['acc']}")
 else:
-    logging.info('Micro precision: {}'.format(result['micro_p']))
-    logging.info('Micro recall: {}'.format(result['micro_r']))
-    logging.info('Micro F1: {}'.format(result['micro_f1']))
+    logging.info(f"Micro precision: {result['micro_p']}")
+    logging.info(f"Micro recall: {result['micro_r']}")
+    logging.info(f"Micro F1: {result['micro_f1']}")
+    logging.info(f"Macro F1: {result['macro_f1']}")
+    logging.info(f"Weighted F1: {result['weighted_f1']}")
