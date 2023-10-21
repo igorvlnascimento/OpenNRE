@@ -77,6 +77,15 @@ def download_semeval(root_path=default_root_path):
         os.system('wget -P ' + os.path.join(root_path, 'benchmark/semeval') + ' ' + root_url + 'opennre/benchmark/semeval/semeval_test.txt')
         os.system('wget -P ' + os.path.join(root_path, 'benchmark/semeval') + ' ' + root_url + 'opennre/benchmark/semeval/semeval_val.txt')
 
+def download_ddi(root_path=default_root_path):
+    check_root()
+    if not os.path.exists(os.path.join(root_path, 'benchmark/ddi')):
+        os.mkdir(os.path.join(root_path, 'benchmark/ddi'))
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1YUVHGLSOk-ySbhV3HqySa3RFVcB8Xxti' -O benchmark/ddi/ddi_rel2id.json")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1QbpwcJbDf2TPbWf28kr7tmNPZMli5z2w' -O benchmark/ddi/ddi_train.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1MrXUcs_4RcOHzjtumI8lO3tUUYnAS6rw' -O benchmark/ddi/ddi_test.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1oIIBOtTdNe8sq54txe6hh9wARQ7AwC6n' -O benchmark/ddi/ddi_val.txt")
+
 def download_glove(root_path=default_root_path):
     check_root()
     if not os.path.exists(os.path.join(root_path, 'pretrain/glove')):
@@ -116,6 +125,8 @@ def download(name, root_path=default_root_path):
         download_wiki80(root_path=root_path)
     elif name == 'tacred':
         download_tacred(root_path=root_path)
+    elif name == 'ddi':
+        download_ddi(root_path=root_path)
     elif name == 'glove':
         download_glove(root_path=root_path)
     elif name == 'bert_base_uncased':

@@ -26,7 +26,7 @@ parser.add_argument('--encoder', default='pcnn', choices=['pcnn', 'cnn'])
 # Data
 parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],
         help='Metric for picking up best checkpoint')
-parser.add_argument('--dataset', default='none', choices=['none', 'semeval', 'wiki80', 'tacred'], 
+parser.add_argument('--dataset', default='none', choices=['none', 'semeval', 'wiki80', 'tacred', 'ddi'], 
         help='Dataset. If not none, the following args can be ignored')
 parser.add_argument('--train_file', default='', type=str,
         help='Training data file')
