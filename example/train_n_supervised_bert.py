@@ -130,6 +130,7 @@ else:
 # Define the model
 model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
 
+acc, micro_f1, macro_f1, weighted_f1 = [], [], [], []
 for i in range(args.trials):
 
     ckpt = DATETIME_PATH / '{}_{}.pth.tar'.format(args.ckpt, i+1)
@@ -161,6 +162,11 @@ for i in range(args.trials):
     with open(DATETIME_PATH / f'results_{i+1}.txt', 'w') as results_file:
         results_file.write(str(result))
 
+    acc.append(result['acc'])
+    micro_f1.append(result['micro_f1'])
+    macro_f1.append(result['macro_f1'])
+    weighted_f1.append(result['weighted_f1'])
+
     # Print the result
     logging.info('Test set results:')
     logging.info('Accuracy: {}'.format(result['acc']))
@@ -176,3 +182,9 @@ for i in range(args.trials):
         figsize=(10, 7)
     )
     fig.savefig(DATETIME_PATH / f'confusion_matrix_{i+1}.png')
+
+with open(DATETIME_PATH / 'mean_std_results.txt', 'w') as mean_file:
+    mean_file.write('Accuracy mean: {} +- {}\n'.format(np.mean(acc), np.std(acc)))
+    mean_file.write('Micro F1 mean: {} +- {}\n'.format(np.mean(micro_f1), np.std(micro_f1)))
+    mean_file.write('Macro F1 mean: {} +- {}\n'.format(np.mean(macro_f1), np.std(macro_f1)))
+    mean_file.write('Weighted F1 mean: {} +- {}\n'.format(np.mean(weighted_f1), np.std(weighted_f1)))
