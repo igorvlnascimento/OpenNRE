@@ -77,8 +77,14 @@ else:
 # Some basic settings
 root_path = '.'
 sys.path.append(root_path)
-if not os.path.exists('ckpt'):
-    os.mkdir('ckpt')
+CKPT_PATH = Path('ckpt')
+DATASET_PATH = CKPT_PATH / args.dataset
+PRETRAIN_PATH = DATASET_PATH / args.pretrain_path
+POOLER_PATH = PRETRAIN_PATH / args.pooler
+DATETIME_PATH = POOLER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
+DATETIME_PATH.mkdir(parents=True, exist_ok=True)
+if len(args.ckpt) == 0:
+    args.ckpt = '{}_{}_{}'.format(args.dataset, args.pretrain_path, args.pooler)
 
 if args.dataset != 'none':
     opennre.download(args.dataset, root_path=root_path)
@@ -119,16 +125,12 @@ elif args.pooler == 'cls':
 else:
     raise NotImplementedError
 
-if len(args.ckpt) == 0:
-    args.ckpt = '{}_{}_{}_{}'.format(args.dataset, args.pretrain_path, args.pooler, datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S"))
+# Define the model
+model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
 
 for i in range(args.trials):
 
-    ckpt = 'ckpt/{}_{}.pth.tar'.format(args.ckpt, i+1)
-    print(ckpt)
-
-    # Define the model
-    model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
+    ckpt = DATETIME_PATH / '{}_{}.pth.tar'.format(args.ckpt, i+1)
 
     # Define the whole training framework
     framework = opennre.framework.SentenceRE(

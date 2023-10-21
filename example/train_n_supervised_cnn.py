@@ -72,10 +72,14 @@ else:
 # Some basic settings
 root_path = '.'
 sys.path.append(root_path)
-if not os.path.exists('ckpt'):
-    os.mkdir('ckpt')
+CKPT_PATH = Path('ckpt')
+DATASET_PATH = CKPT_PATH / args.dataset
+ENCODER_PATH = DATASET_PATH / args.encoder
+DATETIME_PATH = ENCODER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
+DATETIME_PATH.mkdir(parents=True, exist_ok=True)
+
 if len(args.ckpt) == 0:
-    args.ckpt = '{}_{}_{}'.format(args.dataset, args.encoder, datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S"))
+    args.ckpt = '{}_{}'.format(args.dataset, args.encoder)
 
 if args.dataset != 'none':
     opennre.download(args.dataset, root_path=root_path)
@@ -139,8 +143,7 @@ model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
 
 for i in range(args.trials):
 
-    ckpt = 'ckpt/{}_{}.pth.tar'.format(args.ckpt, i+1)
-    print(ckpt)
+    ckpt = DATETIME_PATH / '{}_{}.pth.tar'.format(args.ckpt, i+1)
 
     # Define the whole training framework
     framework = opennre.framework.SentenceRE(

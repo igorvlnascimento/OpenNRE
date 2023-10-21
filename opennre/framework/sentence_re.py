@@ -132,9 +132,6 @@ class SentenceRE(nn.Module):
             logging.info('Metric {} current / best: {} / {}'.format(metric, result[metric], best_metric))
             if result[metric] > best_metric:
                 logging.info("Best ckpt and saved.")
-                folder_path = '/'.join(self.ckpt.split('/')[:-1])
-                if not os.path.exists(folder_path):
-                    os.mkdir(folder_path)
                 torch.save({'state_dict': self.model.state_dict()}, self.ckpt)
                 best_metric = result[metric]
         logging.info("Best %s on val set: %f" % (metric, best_metric))
