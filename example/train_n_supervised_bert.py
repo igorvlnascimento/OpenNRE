@@ -48,9 +48,7 @@ parser.add_argument('--rel2id_file', default='', type=str,
         help='Relation to ID file')
 
 # Hyper-parameters
-parser.add_argument('--trials', default=5, type=int,
-        help='Trials')
-parser.add_argument('--batch_size', default=64, type=int,
+parser.add_argument('--batch_size', default=2, type=int,
         help='Batch size')
 parser.add_argument('--lr', default=2e-5, type=float,
         help='Learning rate')
@@ -149,7 +147,7 @@ for i in range(args.trials):
     )
 
     # Set random seed
-    set_seed(SEEDS[i])
+    set_seed(int(SEEDS[i]))
 
     # Train the model
     if not args.only_test:
