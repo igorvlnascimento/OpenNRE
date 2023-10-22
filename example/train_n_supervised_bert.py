@@ -48,7 +48,7 @@ parser.add_argument('--rel2id_file', default='', type=str,
         help='Relation to ID file')
 
 # Hyper-parameters
-parser.add_argument('--batch_size', default=2, type=int,
+parser.add_argument('--batch_size', default=64, type=int,
         help='Batch size')
 parser.add_argument('--lr', default=2e-5, type=float,
         help='Learning rate')
@@ -70,7 +70,7 @@ if os.path.exists(SEEDS_TEXT_FILE):
     with open(SEEDS_TEXT_FILE, 'r') as seeds_file:
         SEEDS = seeds_file.readlines()
 else:
-    SEEDS = [random.randint(10**6, 10**7 - 1) for _ in range(args.trials)]
+    SEEDS = [str(random.randint(10**6, 10**7 - 1)) for _ in range(args.trials)]
     with open(SEEDS_TEXT_FILE, 'w') as seeds_file:
         seeds_file.write('\n'.join(SEEDS))
 
