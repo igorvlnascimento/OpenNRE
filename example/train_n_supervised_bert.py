@@ -110,24 +110,24 @@ for arg in vars(args):
 
 rel2id = json.load(open(args.rel2id_file))
 
-# Define the sentence encoder
-if args.pooler == 'entity':
-    sentence_encoder = opennre.encoder.BERTEntityEncoder(
-        max_length=args.max_length, 
-        pretrain_path=args.pretrain_path,
-        mask_entity=args.mask_entity
-    )
-elif args.pooler == 'cls':
-    sentence_encoder = opennre.encoder.BERTEncoder(
-        max_length=args.max_length, 
-        pretrain_path=args.pretrain_path,
-        mask_entity=args.mask_entity
-    )
-else:
-    raise NotImplementedError
-
 acc, micro_f1, macro_f1, weighted_f1 = [], [], [], []
 for i in range(args.trials):
+
+    # Define the sentence encoder
+    if args.pooler == 'entity':
+        sentence_encoder = opennre.encoder.BERTEntityEncoder(
+            max_length=args.max_length, 
+            pretrain_path=args.pretrain_path,
+            mask_entity=args.mask_entity
+        )
+    elif args.pooler == 'cls':
+        sentence_encoder = opennre.encoder.BERTEncoder(
+            max_length=args.max_length, 
+            pretrain_path=args.pretrain_path,
+            mask_entity=args.mask_entity
+        )
+    else:
+        raise NotImplementedError
 
     # Define the model
     model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)

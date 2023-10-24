@@ -111,38 +111,38 @@ opennre.download('glove', root_path=root_path)
 word2id = json.load(open(os.path.join(root_path, 'pretrain/glove/glove.6B.50d_word2id.json')))
 word2vec = np.load(os.path.join(root_path, 'pretrain/glove/glove.6B.50d_mat.npy'))
 
-# Define the sentence encoder
-if args.encoder == 'pcnn':
-    sentence_encoder = opennre.encoder.PCNNEncoder(
-        token2id=word2id,
-        max_length=args.max_length,
-        word_size=50,
-        position_size=5,
-        hidden_size=230,
-        blank_padding=True,
-        kernel_size=3,
-        padding_size=1,
-        word2vec=word2vec,
-        dropout=0.5
-    )
-elif args.encoder == 'cnn':
-    sentence_encoder = opennre.encoder.CNNEncoder(
-        token2id=word2id,
-        max_length=args.max_length,
-        word_size=50,
-        position_size=5,
-        hidden_size=230,
-        blank_padding=True,
-        kernel_size=3,
-        padding_size=1,
-        word2vec=word2vec,
-        dropout=0.5
-    )
-else:
-    raise NotImplementedError
-
 acc, micro_f1, macro_f1, weighted_f1 = [], [], [], []
 for i in range(args.trials):
+
+    # Define the sentence encoder
+    if args.encoder == 'pcnn':
+        sentence_encoder = opennre.encoder.PCNNEncoder(
+            token2id=word2id,
+            max_length=args.max_length,
+            word_size=50,
+            position_size=5,
+            hidden_size=230,
+            blank_padding=True,
+            kernel_size=3,
+            padding_size=1,
+            word2vec=word2vec,
+            dropout=0.5
+        )
+    elif args.encoder == 'cnn':
+        sentence_encoder = opennre.encoder.CNNEncoder(
+            token2id=word2id,
+            max_length=args.max_length,
+            word_size=50,
+            position_size=5,
+            hidden_size=230,
+            blank_padding=True,
+            kernel_size=3,
+            padding_size=1,
+            word2vec=word2vec,
+            dropout=0.5
+        )
+    else:
+        raise NotImplementedError
 
     # Define the model
     model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
