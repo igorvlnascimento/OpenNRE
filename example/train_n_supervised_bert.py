@@ -82,7 +82,8 @@ DATASET_PATH = CKPT_PATH / args.dataset
 PRETRAIN_PATH = DATASET_PATH / args.pretrain_path
 POOLER_PATH = PRETRAIN_PATH / args.pooler
 DATETIME_PATH = POOLER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
-DATETIME_PATH.mkdir(parents=True, exist_ok=True)
+if args.dataset is not None:
+    DATETIME_PATH.mkdir(parents=True, exist_ok=True)
 if len(args.ckpt) == 0:
     args.ckpt = '{}_{}_{}'.format(args.dataset, args.pretrain_path, args.pooler)
 
@@ -125,11 +126,11 @@ elif args.pooler == 'cls':
 else:
     raise NotImplementedError
 
-# Define the model
-model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
-
 acc, micro_f1, macro_f1, weighted_f1 = [], [], [], []
 for i in range(args.trials):
+
+    # Define the model
+    model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
 
     ckpt = DATETIME_PATH / '{}_{}.pth.tar'.format(args.ckpt, i+1)
 
