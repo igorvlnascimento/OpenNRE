@@ -6,3 +6,6 @@ scipy
 nltk
 six
 mlxtend
+sacrebleu
+rouge
+peft
