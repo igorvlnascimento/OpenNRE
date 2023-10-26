@@ -487,5 +487,3 @@ def MultiLabelSentenceRELoader(path, rel2id, tokenizer, batch_size,
             num_workers=num_workers,
             collate_fn=collate_fn)
     return data_loader
-
-
