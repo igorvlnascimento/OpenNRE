@@ -11,6 +11,7 @@ from ast import literal_eval
 from pathlib import Path
 from datetime import datetime
 
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -61,32 +62,37 @@ dataset = dataset.map(lambda x: {
     }
 )
 
-model = AutoModelForCausalLM.from_pretrained(args.llm)
+labels = list(set(dataset['train']['label']))
 
-MODELS_DIR = Path('ckpt')
-MODELS_PATH = MODELS_DIR / args.dataset / args.llm / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
-MODEL_NAME = f"{args.dataset}_{args.llm}_finetuning"
-MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
-MODELS_PATH_NAME.mkdir(parents=True, exist_ok=True)
+for label in labels:
+    print(f"Finetuning GPT2 for label: {label}")
 
-train_args = TrainingArguments(
-    output_dir=MODELS_PATH_NAME,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=2,
-    num_train_epochs=5,
-    seed=args.seed,
-    report_to="none",
-    push_to_hub=True,
-)
+    dataset_label = dataset.filter(lambda x: x["label"] == label)
+    model = AutoModelForCausalLM.from_pretrained(args.llm)
 
-trainer = SFTTrainer(
-    model,
-    train_dataset=dataset["train"],
-    dataset_text_field="text",
-    max_seq_length=128,
-    args=train_args,
-)
+    MODELS_DIR = Path('ckpt')
+    MODELS_PATH = MODELS_DIR / args.dataset / label / args.llm / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
+    MODEL_NAME = f"{args.dataset}_{label}_{args.llm}_finetuning"
+    MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
+    MODELS_PATH_NAME.mkdir(parents=True, exist_ok=True)
 
-trainer.train()
+    train_args = TrainingArguments(
+        output_dir=MODELS_PATH,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=2,
+        num_train_epochs=5,
+        seed=args.seed,
+        report_to="none",
+    )
 
-trainer.save_model(MODELS_PATH_NAME)
+    trainer = SFTTrainer(
+        model,
+        train_dataset=dataset_label["train"],
+        dataset_text_field="text",
+        max_seq_length=128,
+        args=train_args,
+    )
+
+    trainer.train()
+
+    trainer.save_model(MODELS_PATH_NAME)
