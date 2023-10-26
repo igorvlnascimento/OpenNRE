@@ -5,9 +5,10 @@ import argparse
 import logging
 import random
 from trl import SFTTrainer
+from transformers import AutoModelForCausalLM, TrainingArguments
 from datasets import load_dataset
 from ast import literal_eval
-
+from pathlib import Path
 
 def set_seed(seed):
     random.seed(seed)
@@ -59,12 +60,30 @@ dataset = dataset.map(lambda x: {
     }
 )
 
+model = AutoModelForCausalLM.from_pretrained(args.llm)
+
+MODELS_DIR = Path('ckpt')
+MODELS_PATH = MODELS_DIR / args.dataset / args.llm
+MODEL_NAME = f"{args.dataset}_{args.llm}_finetuning.pth.tar"
+MODELS_PATH.mkdir(parents=True, exist_ok=True)
+MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
+
+train_args = TrainingArguments(
+    output_dir=MODELS_PATH,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=8,
+    num_train_epochs=5,
+    seed=args.seed,
+)
+
 trainer = SFTTrainer(
-    args.llm,
+    model,
     train_dataset=dataset["train"],
     dataset_text_field="text",
     max_seq_length=128,
-    num_train_epochs=5
+    args=train_args,
 )
 
 trainer.train()
+
+trainer.save_model(MODEL_NAME)
