@@ -64,6 +64,7 @@ trainer = SFTTrainer(
     train_dataset=dataset["train"],
     dataset_text_field="text",
     max_seq_length=128,
+    num_train_epochs=5
 )
 
 trainer.train()
