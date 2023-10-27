@@ -10,6 +10,8 @@ from datasets import load_dataset
 from ast import literal_eval
 from pathlib import Path
 from datetime import datetime
+import opennre
+import os
 
 def set_seed(seed):
     random.seed(seed)
@@ -36,6 +38,16 @@ args = parser.parse_args()
 
 # Set random seed
 set_seed(args.seed)
+
+root_path = '.'
+if args.dataset != 'none':
+    try:
+        opennre.download(args.dataset, root_path=root_path)
+    except:
+        raise Exception('--train_file are not specified or files do not exist. Or specify --dataset')
+else:
+    raise Exception('--train_file are not specified or files do not exist. Or specify --dataset')
+
 
 logging.info('Arguments:')
 for arg in vars(args):
@@ -64,8 +76,8 @@ dataset = dataset.map(lambda x: {
 model = AutoModelForCausalLM.from_pretrained(args.llm)
 
 MODELS_DIR = Path('ckpt')
-MODELS_PATH = MODELS_DIR / args.dataset / args.llm / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
-MODEL_NAME = f"{args.dataset}_{args.llm}_finetuning"
+MODELS_PATH = MODELS_DIR / args.dataset / args.llm
+MODEL_NAME = f"dare_{args.llm}_{args.dataset}_finetuning"
 MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
 MODELS_PATH_NAME.mkdir(parents=True, exist_ok=True)
 
@@ -76,7 +88,6 @@ train_args = TrainingArguments(
     num_train_epochs=5,
     seed=args.seed,
     report_to="none",
-    push_to_hub=True,
 )
 
 trainer = SFTTrainer(

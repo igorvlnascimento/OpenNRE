@@ -10,6 +10,8 @@ from datasets import load_dataset
 from ast import literal_eval
 from pathlib import Path
 from datetime import datetime
+import opennre
+import os
 
 
 def set_seed(seed):
@@ -38,6 +40,15 @@ args = parser.parse_args()
 # Set random seed
 set_seed(args.seed)
 
+root_path = '.'
+if args.dataset != 'none':
+    try:
+        opennre.download(args.dataset, root_path=root_path)
+    except:
+        raise Exception('--train_file are not specified or files do not exist. Or specify --dataset')
+else:
+    raise Exception('--train_file are not specified or files do not exist. Or specify --dataset')
+
 logging.info('Arguments:')
 for arg in vars(args):
     logging.info('    {}: {}'.format(arg, getattr(args, arg)))
@@ -64,15 +75,17 @@ dataset = dataset.map(lambda x: {
 
 labels = list(set(dataset['train']['label']))
 
+LLM_MODEL = Path('ckpt') / args.dataset / args.llm
+
 for label in labels:
     print(f"Finetuning GPT2 for label: {label}")
 
     dataset_label = dataset.filter(lambda x: x["label"] == label)
-    model = AutoModelForCausalLM.from_pretrained(args.llm)
+    model = AutoModelForCausalLM.from_pretrained(LLM_MODEL)
 
     MODELS_DIR = Path('ckpt')
-    MODELS_PATH = MODELS_DIR / args.dataset / label / args.llm / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
-    MODEL_NAME = f"{args.dataset}_{label}_{args.llm}_finetuning"
+    MODELS_PATH = MODELS_DIR / args.dataset / label
+    MODEL_NAME = f"dare_{args.llm}_{args.dataset}_{label}_finetuning"
     MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
     MODELS_PATH_NAME.mkdir(parents=True, exist_ok=True)
 
