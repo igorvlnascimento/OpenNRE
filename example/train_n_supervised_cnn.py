@@ -76,7 +76,7 @@ root_path = '.'
 sys.path.append(root_path)
 CKPT_PATH = Path('ckpt')
 DATASET_PATH = CKPT_PATH / args.dataset
-ENCODER_PATH = DATASET_PATH / args.encoder
+ENCODER_PATH = DATASET_PATH / f"{args.encoder}_mask_entity" if args.mask_entity else args.encoder
 DATETIME_PATH = ENCODER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
 if args.dataset is not None:
     DATETIME_PATH.mkdir(parents=True, exist_ok=True)

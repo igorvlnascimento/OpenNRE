@@ -75,8 +75,8 @@ class BERTEncoder(nn.Module):
             ent0 = ['[unused4]'] if not rev else ['[unused5]']
             ent1 = ['[unused5]'] if not rev else ['[unused4]']
         else:
-            ent0 = ['[unused0]'] + ent0 + ['[unused1]'] if not rev else ['[unused2]'] + ent0 + ['[unused3]']
-            ent1 = ['[unused2]'] + ent1 + ['[unused3]'] if not rev else ['[unused0]'] + ent1 + ['[unused1]']
+            ent0 = ['[unused0]'] + ["drug_a"] + ['[unused1]'] if not rev else ['[unused2]'] + ["drug_a"] + ['[unused3]']
+            ent1 = ['[unused2]'] + ["drug_b"] + ['[unused3]'] if not rev else ['[unused0]'] + ["drug_b"] + ['[unused1]']
 
         re_tokens = ['[CLS]'] + sent0 + ent0 + sent1 + ent1 + sent2 + ['[SEP]']
         
@@ -182,11 +182,11 @@ class BERTEntityEncoder(nn.Module):
             sent2 = self.tokenizer.tokenize(' '.join(sentence[pos_max[1]:]))
 
         if self.mask_entity:
-            ent0 = ['[unused4]'] if not rev else ['[unused5]']
-            ent1 = ['[unused5]'] if not rev else ['[unused4]']
+            ent0 = ['drug_a'] if not rev else ['drug_b']
+            ent1 = ['drug_b'] if not rev else ['drug_a']
         else:
-            ent0 = ['[unused0]'] + ent0 + ['[unused1]'] if not rev else ['[unused2]'] + ent0 + ['[unused3]']
-            ent1 = ['[unused2]'] + ent1 + ['[unused3]'] if not rev else ['[unused0]'] + ent1 + ['[unused1]']
+            ent0 = ['[unused0]'] + ["drug_a"] + ['[unused1]'] if not rev else ['[unused2]'] + ["drug_a"] + ['[unused3]']
+            ent1 = ['[unused2]'] + ["drug_b"] + ['[unused3]'] if not rev else ['[unused0]'] + ["drug_b"] + ['[unused1]']
 
         re_tokens = ['[CLS]'] + sent0 + ent0 + sent1 + ent1 + sent2 + ['[SEP]']
         pos1 = 1 + len(sent0) if not rev else 1 + len(sent0 + ent0 + sent1)

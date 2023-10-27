@@ -112,8 +112,8 @@ class PCNNEncoder(BaseEncoder):
             ent_0 = self.tokenizer.tokenize(sentence[pos_min[0]:pos_min[1]])
             ent_1 = self.tokenizer.tokenize(sentence[pos_max[0]:pos_max[1]])
             if self.mask_entity:
-                ent_0 = ['[UNK]']
-                ent_1 = ['[UNK]']
+                ent_0 = ['drug_a']
+                ent_1 = ['drug_b']
             tokens = sent_0 + ent_0 + sent_1 + ent_1 + sent_2
             if rev:
                 pos_tail = [len(sent_0), len(sent_0) + len(ent_0)]
