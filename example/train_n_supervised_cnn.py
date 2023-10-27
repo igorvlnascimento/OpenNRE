@@ -27,6 +27,8 @@ parser.add_argument('--ckpt', default='',
 parser.add_argument('--only_test', action='store_true', 
         help='Only run test')
 parser.add_argument('--encoder', default='pcnn', choices=['pcnn', 'cnn'])
+parser.add_argument('--mask_entity', action='store_true', 
+        help='Mask entity mentions')
 
 # Data
 parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],
@@ -126,7 +128,8 @@ for i in range(args.trials):
             kernel_size=3,
             padding_size=1,
             word2vec=word2vec,
-            dropout=0.5
+            dropout=0.5,
+            mask_entity=args.mask_entity
         )
     elif args.encoder == 'cnn':
         sentence_encoder = opennre.encoder.CNNEncoder(
@@ -139,7 +142,8 @@ for i in range(args.trials):
             kernel_size=3,
             padding_size=1,
             word2vec=word2vec,
-            dropout=0.5
+            dropout=0.5,
+            mask_entity=args.mask_entity
         )
     else:
         raise NotImplementedError
