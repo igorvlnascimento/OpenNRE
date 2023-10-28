@@ -9,3 +9,5 @@ mlxtend
 sacrebleu
 rouge
 peft
+trl
+xformers

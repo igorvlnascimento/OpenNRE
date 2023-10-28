@@ -28,7 +28,7 @@ parser.add_argument('--seed', default=42, type=int,
         help='Seed')
 
 # LLM
-parser.add_argument('--llm', default="gpt2", type=str,
+parser.add_argument('--llm', default="igorvln/dare_gpt2_ddi", type=str,
         help='LLM')
 
 # Dataset
@@ -81,7 +81,7 @@ for label in labels:
     print(f"Finetuning GPT2 for label: {label}")
 
     dataset_label = dataset.filter(lambda x: x["label"] == label)
-    model = AutoModelForCausalLM.from_pretrained(LLM_MODEL)
+    model = AutoModelForCausalLM.from_pretrained(args.llm)
 
     MODELS_DIR = Path('ckpt')
     MODELS_PATH = MODELS_DIR / args.dataset / label
