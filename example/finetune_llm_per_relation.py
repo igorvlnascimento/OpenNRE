@@ -65,10 +65,10 @@ dataset = dataset.map(lambda x: {
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join(
-        x["text"]["token"][:x["text"]["h"]["position"][0]] + ["druga"] + \
+        " ".join([f"[{x['label']}]"] +
+        x["text"]["token"][:x["text"]["h"]["position"][0]] + ["drug_a"] + \
         x["text"]["token"][x["text"]["h"]["position"][1]:x["text"]["t"]["position"][0]] + \
-        ["drugb"] + x["text"]["token"][x["text"]["t"]["position"][1]:]),
+        ["drug_b"] + x["text"]["token"][x["text"]["t"]["position"][1]:]),
     "label": x["label"]
     }
 )
