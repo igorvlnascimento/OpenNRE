@@ -65,7 +65,7 @@ dataset = dataset.map(lambda x: {
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join([f"[{x['label']}]"] +
+        " ".join(
         x["text"]["token"][:x["text"]["h"]["position"][0]] + ["drug_a"] + \
         x["text"]["token"][x["text"]["h"]["position"][1]:x["text"]["t"]["position"][0]] + \
         ["drug_b"] + x["text"]["token"][x["text"]["t"]["position"][1]:]),
@@ -74,8 +74,6 @@ dataset = dataset.map(lambda x: {
 )
 
 labels = list(set(dataset['train']['label']))
-
-LLM_MODEL = Path('ckpt') / args.dataset / args.llm
 
 for label in labels:
     print(f"Finetuning GPT2 for label: {label}")
