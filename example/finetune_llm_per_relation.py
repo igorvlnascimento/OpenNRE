@@ -28,7 +28,7 @@ parser.add_argument('--seed', default=42, type=int,
         help='Seed')
 
 # LLM
-parser.add_argument('--llm', default="gpt2", type=str,
+parser.add_argument('--llm', default="igorvln/dare_gpt2_ddi", type=str,
         help='LLM')
 
 # Dataset
@@ -65,7 +65,7 @@ dataset = dataset.map(lambda x: {
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join([f"[{x['label']}]"] +
+        " ".join(
         x["text"]["token"][:x["text"]["h"]["position"][0]] + ["drug_a"] + \
         x["text"]["token"][x["text"]["h"]["position"][1]:x["text"]["t"]["position"][0]] + \
         ["drug_b"] + x["text"]["token"][x["text"]["t"]["position"][1]:]),
@@ -75,13 +75,11 @@ dataset = dataset.map(lambda x: {
 
 labels = list(set(dataset['train']['label']))
 
-LLM_MODEL = Path('ckpt') / args.dataset / args.llm
-
 for label in labels:
     print(f"Finetuning GPT2 for label: {label}")
 
     dataset_label = dataset.filter(lambda x: x["label"] == label)
-    model = AutoModelForCausalLM.from_pretrained(LLM_MODEL)
+    model = AutoModelForCausalLM.from_pretrained(args.llm)
 
     MODELS_DIR = Path('ckpt')
     MODELS_PATH = MODELS_DIR / args.dataset / label
