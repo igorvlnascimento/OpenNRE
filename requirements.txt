@@ -10,3 +10,5 @@ sacrebleu
 rouge
 peft
 nltk
+trl
+xformers
