@@ -85,6 +85,9 @@ def download_ddi(root_path=default_root_path):
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1QbpwcJbDf2TPbWf28kr7tmNPZMli5z2w' -O benchmark/ddi/ddi_train.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1MrXUcs_4RcOHzjtumI8lO3tUUYnAS6rw' -O benchmark/ddi/ddi_test.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1oIIBOtTdNe8sq54txe6hh9wARQ7AwC6n' -O benchmark/ddi/ddi_val.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=18d8NON7BKNVwTPyprb9N6P9BwhW9sxVh' -O benchmark/ddi/ddi_train_gpt.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1lowaa1xW8i96-CjisCPyX3jaug8aZlmC' -O benchmark/ddi/ddi_synt_train.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=19vCZy7142xL7ODHChOno_RzRvcfeo03H' -O benchmark/ddi/ddi_synt_val.txt")
 
 def download_glove(root_path=default_root_path):
     check_root()
@@ -105,6 +108,13 @@ def download_pretrain(model_name, root_path=default_root_path):
     ckpt = os.path.join(root_path, 'pretrain/nre/' + model_name + '.pth.tar')
     if not os.path.exists(ckpt):
         os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + root_url + 'opennre/pretrain/nre/' + model_name + '.pth.tar')
+
+def download_custom_pretrain(model_name, root_path=default_root_path):
+    ckpt = os.path.join(root_path, 'pretrain/nre/' + model_name + '.pth.tar')
+    print("ckpt:",ckpt)
+    if not os.path.exists(ckpt):
+        print("FOI")
+        os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O pretrain/nre/{model_name}.pth.tar")
 
 def download(name, root_path=default_root_path):
     if not os.path.exists(os.path.join(root_path, 'benchmark')):
@@ -182,6 +192,20 @@ def get_model(model_name, root_path=default_root_path):
         else:
             sentence_encoder = encoder.BERTEncoder(
                 max_length=80, pretrain_path=os.path.join(root_path, 'pretrain/bert-base-uncased'))
+        m = model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
+        m.load_state_dict(torch.load(ckpt, map_location='cpu')['state_dict'])
+        return m
+    elif 'bert' in model_name:
+        download_custom_pretrain(model_name, root_path='')
+        download('bert_base_uncased', root_path=root_path)
+        download('ddi', root_path=root_path)
+        rel2id = json.load(open(os.path.join('.', 'benchmark/ddi/ddi_rel2id.json')))
+        if 'entity' in model_name:
+            sentence_encoder = encoder.BERTEntityEncoder(
+                max_length=128, pretrain_path=os.path.join('./opennre', 'pretrain/bert-base-uncased'))
+        else:
+            sentence_encoder = encoder.BERTEncoder(
+                max_length=128, pretrain_path=os.path.join('./opennre', 'pretrain/bert-base-uncased'))
         m = model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
         m.load_state_dict(torch.load(ckpt, map_location='cpu')['state_dict'])
         return m

@@ -74,13 +74,11 @@ for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
     generator = pipeline('text-generation', model=f'igorvln/dare_gpt2_ddi_{relation}')
-
-    #dataset_label = dataset.filter(lambda x: x["label"] == relation)
     synthetic_texts = []
 
     for _ in tqdm(range(len(dataset_label["train"]))):
         while True:
-            generated_text = generator("<s>", max_length=101, num_return_sequences=1, pad_token_id=50256)[0]       
+            generated_text = generator("<s>", max_length=101, min_length=9, num_return_sequences=1, pad_token_id=50256)[0]       
             first_sentence = sent_tokenize(generated_text["generated_text"])[0][4:]
             tokenized_sentence = word_tokenize(first_sentence)
             if len(tokenized_sentence) >= 8 and 'drug_a' in tokenized_sentence and 'drug_b' in tokenized_sentence:

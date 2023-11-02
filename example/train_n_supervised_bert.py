@@ -32,6 +32,8 @@ parser.add_argument('--only_test', action='store_true',
         help='Only run test')
 parser.add_argument('--mask_entity', action='store_true', 
         help='Mask entity mentions')
+parser.add_argument('--synthetic', action='store_true', 
+        help='Use synthetic data')
 
 # Data
 parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],
@@ -89,8 +91,12 @@ if len(args.ckpt) == 0:
 
 if args.dataset != 'none':
     opennre.download(args.dataset, root_path=root_path)
-    args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_train.txt'.format(args.dataset))
-    args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_val.txt'.format(args.dataset))
+    if args.synthetic:
+        args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_train.txt'.format(args.dataset))
+        args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_val.txt'.format(args.dataset))
+    else:
+        args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_train.txt'.format(args.dataset))
+        args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_val.txt'.format(args.dataset))
     args.test_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_test.txt'.format(args.dataset))
     if not os.path.exists(args.test_file):
         logging.warn("Test file {} does not exist! Use val file instead".format(args.test_file))
