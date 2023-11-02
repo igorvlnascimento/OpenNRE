@@ -81,7 +81,7 @@ root_path = '.'
 sys.path.append(root_path)
 CKPT_PATH = Path('ckpt')
 DATASET_PATH = CKPT_PATH / args.dataset
-PRETRAIN_PATH = DATASET_PATH / f"{args.pretrain}_path_mask_entity" if args.mask_entity else args.pretrain
+PRETRAIN_PATH = DATASET_PATH / f"{args.pretrain_path}_path_mask_entity" if args.mask_entity else args.pretrain
 POOLER_PATH = PRETRAIN_PATH /  args.pooler
 DATETIME_PATH = POOLER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
 if args.dataset is not None:
