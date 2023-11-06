@@ -85,7 +85,7 @@ def download_ddi(root_path=default_root_path):
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1QbpwcJbDf2TPbWf28kr7tmNPZMli5z2w' -O benchmark/ddi/ddi_train.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1MrXUcs_4RcOHzjtumI8lO3tUUYnAS6rw' -O benchmark/ddi/ddi_test.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1oIIBOtTdNe8sq54txe6hh9wARQ7AwC6n' -O benchmark/ddi/ddi_val.txt")
-        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=18d8NON7BKNVwTPyprb9N6P9BwhW9sxVh' -O benchmark/ddi/ddi_train_gpt.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1ECw-ub-1kdxD9mV1IIl6V6L6wz-TjHa2' -O benchmark/ddi/ddi_train_gpt.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1lowaa1xW8i96-CjisCPyX3jaug8aZlmC' -O benchmark/ddi/ddi_synt_train.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=19vCZy7142xL7ODHChOno_RzRvcfeo03H' -O benchmark/ddi/ddi_synt_val.txt")
 
