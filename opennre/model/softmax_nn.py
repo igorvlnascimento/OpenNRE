@@ -36,7 +36,7 @@ class SoftmaxNN(SentenceRE):
         score, pred = logits.max(-1)
         score = score.item()
         pred = pred.item()
-        return self.id2rel[pred], score
+        return self.id2rel[pred], score, logits
     
     def forward(self, *args):
         """
