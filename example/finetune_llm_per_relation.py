@@ -66,9 +66,9 @@ dataset = dataset.map(lambda x: {
 dataset = dataset.map(lambda x: {
     "text": 
         " ".join(["<s>"] + 
-        x["text"]["token"][:x["text"]["h"]["position"][0]] + ["drug_a"] + \
-        x["text"]["token"][x["text"]["h"]["position"][1]:x["text"]["t"]["position"][0]] + \
-        ["drug_b"] + x["text"]["token"][x["text"]["t"]["position"][1]:]),
+        x["text"]["token"][:x["text"]["h"]["pos"][0]] + ["drug_a"] + \
+        x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
+        ["drug_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
     }
 )
