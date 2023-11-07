@@ -113,8 +113,7 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
     ckpt = os.path.join(root_path, 'pretrain/nre/' + model_name + '.pth.tar')
     print("ckpt:",ckpt)
     if not os.path.exists(ckpt):
-        print("FOI")
-        os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O pretrain/nre/{model_name}.pth.tar")
+        os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O {root_path}/pretrain/nre/{model_name}.pth.tar")
 
 def download(name, root_path=default_root_path):
     if not os.path.exists(os.path.join(root_path, 'benchmark')):
@@ -146,7 +145,7 @@ def download(name, root_path=default_root_path):
 
 def get_model(model_name, root_path=default_root_path):
     check_root()
-    ckpt = os.path.join(root_path, 'pretrain/nre/' + model_name + '.pth.tar')
+    ckpt = os.path.join(root_path, './pretrain/nre/' + model_name + '.pth.tar')
     if model_name == 'wiki80_cnn_softmax':
         download_pretrain(model_name, root_path=root_path)
         download('glove', root_path=root_path)
@@ -196,7 +195,7 @@ def get_model(model_name, root_path=default_root_path):
         m.load_state_dict(torch.load(ckpt, map_location='cpu')['state_dict'])
         return m
     elif 'bert' in model_name:
-        download_custom_pretrain(model_name, root_path='')
+        download_custom_pretrain(model_name, root_path=root_path)
         download('bert_base_uncased', root_path=root_path)
         download('ddi', root_path=root_path)
         rel2id = json.load(open(os.path.join('.', 'benchmark/ddi/ddi_rel2id.json')))
