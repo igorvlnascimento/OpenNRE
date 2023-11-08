@@ -7,17 +7,26 @@ import numpy as np
 
 import torch
 import opennre
+import argparse
 
 from ast import literal_eval
 
-with open('benchmark/ddi/train_gpt2/ddi_train_gpt.txt', 'r') as gpt_txt:
+parser = argparse.ArgumentParser()
+
+# Dataset
+parser.add_argument('--dataset', default="ddi", type=str,
+        help='Dataset')
+
+args = parser.parse_args()
+
+with open(f'benchmark/{args.dataset}/{args.dataset}_all_synt.txt', 'r') as gpt_txt:
     tokens_train_sentences = gpt_txt.read().splitlines()
 
 train_sentences = []
 for i, _ in enumerate(tokens_train_sentences):
    train_sentences.append(" ".join(literal_eval(tokens_train_sentences[i])['token']))
 
-with open('benchmark/ddi/ddi_test.txt', 'r') as gpt_txt:
+with open(f'benchmark/{args.dataset}/{args.dataset}_test.txt', 'r') as gpt_txt:
     tokens_test_sentences = gpt_txt.read().splitlines()
 
 test_sentences = []
@@ -49,7 +58,7 @@ for i, test in enumerate(test_data):
 
 def calculate_inception_score(texts, n_split=10, eps=1E-16):
     # load model
-    model = opennre.get_model('ddi_bert-base-uncased_entity', './opennre')
+    model = opennre.get_model(f'{args.dataset}_bert-base-uncased_entity', '.')
     yhat = None
     for text in texts:
         text = literal_eval(text)
