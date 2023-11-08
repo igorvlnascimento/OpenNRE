@@ -33,7 +33,7 @@ parser.add_argument('--mask_entity', action='store_true',
 # Data
 parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],
         help='Metric for picking up best checkpoint')
-parser.add_argument('--dataset', default='none', choices=['none', 'semeval', 'wiki80', 'tacred', 'ddi'], 
+parser.add_argument('--dataset', default='none', choices=['none', 'semeval', 'wiki80', 'tacred', 'ddi', 'semeval2018'], 
         help='Dataset. If not none, the following args can be ignored')
 parser.add_argument('--train_file', default='', type=str,
         help='Training data file')
@@ -78,7 +78,12 @@ root_path = '.'
 sys.path.append(root_path)
 CKPT_PATH = Path('ckpt')
 DATASET_PATH = CKPT_PATH / args.dataset
-ENCODER_PATH = DATASET_PATH / f"{args.encoder}_mask_entity" if args.mask_entity else args.encoder
+print(DATASET_PATH)
+if args.mask_entity:
+    ENCODER_PATH = DATASET_PATH / f"{args.encoder}_mask_entity"
+else:
+    ENCODER_PATH = DATASET_PATH / args.encoder
+print(ENCODER_PATH)
 DATETIME_PATH = ENCODER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
 if args.dataset is not None:
     DATETIME_PATH.mkdir(parents=True, exist_ok=True)
