@@ -16,8 +16,18 @@ parser = argparse.ArgumentParser()
 # Dataset
 parser.add_argument('--dataset', default="ddi", type=str,
         help='Dataset')
+parser.add_argument('--synthetic', action='store_true', 
+        help='Use synthetic data')
+parser.add_argument('--synthetic_rl', action='store_true', 
+        help='Use RL synthetic data')
 
 args = parser.parse_args()
+
+train_dataset = f'{args.dataset}_all_train.txt'
+if args.synthetic:
+    train_dataset = f'{args.dataset}_all_synt.txt'
+elif args.synthetic_rl:
+    train_dataset = f'{args.dataset}_all_synt_rl.txt'
 
 with open(f'benchmark/{args.dataset}/{args.dataset}_all_synt.txt', 'r') as gpt_txt:
     tokens_train_sentences = gpt_txt.read().splitlines()
