@@ -130,7 +130,7 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
     print("ckpt:",ckpt)
     if not os.path.exists(ckpt):
         if 'ddi' in model_name:
-            os.mkdir(os.path.join(root_path, 'pretrain/nre'))
+            os.makedirs(os.path.join(root_path, 'pretrain/nre'), exist_ok=True)
             os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O {root_path}/pretrain/nre/{model_name}.pth.tar")
         else:
             print("Nothing")
