@@ -125,7 +125,10 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
     ckpt = os.path.join(root_path, 'pretrain/nre/' + model_name + '.pth.tar')
     print("ckpt:",ckpt)
     if not os.path.exists(ckpt):
-        os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O {root_path}/pretrain/nre/{model_name}.pth.tar")
+        if 'ddi' in model_name:
+            os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O {root_path}/pretrain/nre/{model_name}.pth.tar")
+        else:
+            print("Nothing")
 
 def download(name, root_path=default_root_path):
     if not os.path.exists(os.path.join(root_path, 'benchmark')):
