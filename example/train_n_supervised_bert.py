@@ -34,6 +34,8 @@ parser.add_argument('--mask_entity', action='store_true',
         help='Mask entity mentions')
 parser.add_argument('--synthetic', action='store_true', 
         help='Use synthetic data')
+parser.add_argument('--synthetic_rl', action='store_true', 
+        help='Use RL synthetic data')
 
 # Data
 parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],
@@ -80,7 +82,12 @@ else:
 root_path = '.'
 sys.path.append(root_path)
 CKPT_PATH = Path('ckpt')
-DATASET_PATH = CKPT_PATH / args.dataset
+if args.synthetic:
+    DATASET_PATH = CKPT_PATH / f"{args.dataset}_synt"
+elif args.synthetic_rl:
+    DATASET_PATH = CKPT_PATH / f"{args.dataset}_synt_rl"
+else:
+    DATASET_PATH = CKPT_PATH / args.dataset
 if args.mask_entity:
     PRETRAIN_PATH = DATASET_PATH / f"{args.pretrain_path}_path_mask_entity"
 else:
@@ -97,6 +104,9 @@ if args.dataset != 'none':
     if args.synthetic:
         args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_train.txt'.format(args.dataset))
         args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_val.txt'.format(args.dataset))
+    elif args.synthetic_rl:
+        args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_rl_train.txt'.format(args.dataset))
+        args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_rl_val.txt'.format(args.dataset))
     else:
         args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_train.txt'.format(args.dataset))
         args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_val.txt'.format(args.dataset))
