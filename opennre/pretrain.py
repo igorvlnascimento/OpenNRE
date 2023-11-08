@@ -127,6 +127,7 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
     print("ckpt:",ckpt)
     if not os.path.exists(ckpt):
         if 'ddi' in model_name:
+            os.mkdir(os.path.join(root_path, 'pretrain/nre'))
             os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O {root_path}/pretrain/nre/{model_name}.pth.tar")
         else:
             print("Nothing")
@@ -163,7 +164,7 @@ def download(name, root_path=default_root_path):
 
 def get_model(model_name, root_path=default_root_path):
     check_root()
-    ckpt = os.path.join(root_path, './pretrain/nre/' + model_name + '.pth.tar')
+    ckpt = os.path.join(root_path, 'pretrain/nre/' + model_name + '.pth.tar')
     if model_name == 'wiki80_cnn_softmax':
         download_pretrain(model_name, root_path=root_path)
         download('glove', root_path=root_path)
@@ -216,13 +217,13 @@ def get_model(model_name, root_path=default_root_path):
         download_custom_pretrain(model_name, root_path=root_path)
         download('bert_base_uncased', root_path=root_path)
         download('ddi', root_path=root_path)
-        rel2id = json.load(open(os.path.join('.', 'benchmark/ddi/ddi_rel2id.json')))
+        rel2id = json.load(open(os.path.join(root_path, 'benchmark/ddi/ddi_rel2id.json')))
         if 'entity' in model_name:
             sentence_encoder = encoder.BERTEntityEncoder(
-                max_length=128, pretrain_path=os.path.join('./opennre', 'pretrain/bert-base-uncased'))
+                max_length=128, pretrain_path=os.path.join(root_path, 'pretrain/bert-base-uncased'))
         else:
             sentence_encoder = encoder.BERTEncoder(
-                max_length=128, pretrain_path=os.path.join('./opennre', 'pretrain/bert-base-uncased'))
+                max_length=128, pretrain_path=os.path.join(root_path, 'pretrain/bert-base-uncased'))
         m = model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
         m.load_state_dict(torch.load(ckpt, map_location='cpu')['state_dict'])
         return m
