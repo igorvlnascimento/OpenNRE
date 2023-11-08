@@ -12,3 +12,4 @@ peft
 nltk
 trl
 xformers
+gdown

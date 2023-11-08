@@ -7,6 +7,7 @@ import sys
 import json
 import numpy as np
 import logging
+import gdown
 
 root_url = "https://thunlp.oss-cn-qingdao.aliyuncs.com/"
 default_root_path = os.path.join(os.getenv('HOME'), '.opennre')
@@ -131,7 +132,10 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
     if not os.path.exists(ckpt):
         if 'ddi' in model_name:
             os.makedirs(os.path.join(root_path, 'pretrain/nre'), exist_ok=True)
-            os.system('wget -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=17bmMy2njN28JKtFcYpteMU_6vD270joD' -O {root_path}/pretrain/nre/{model_name}.pth.tar")
+            url = 'https://docs.google.com/uc?export=download&id=1wN6DFyR_pjGxWwkXQMVO4Xxcn5Q6B1lM'
+            output = f"pretrain/nre/{model_name}.pth.tar"
+            gdown.download(url, output, quiet=False)
+            #os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=1wN6DFyR_pjGxWwkXQMVO4Xxcn5Q6B1lM' -O pretrain/nre/{model_name}.pth.tar")
         else:
             print("Nothing")
 
