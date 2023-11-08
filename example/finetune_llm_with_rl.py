@@ -40,8 +40,8 @@ parser.add_argument('--llm', default="gpt2", type=str,
         help='LLM')
 
 # LLM
-parser.add_argument('--classifier', default="igorvln/masked_ddi_bert_entity", type=str,
-        help='Re classifier')
+parser.add_argument('--classifier', default="ddi_bert-base-uncased_entity", type=str,
+        help='RE classifier')
 
 # Dataset
 parser.add_argument('--dataset', default="ddi", type=str,
@@ -101,7 +101,7 @@ def extract_output(model, texts, label):
 ctrl_str = [f"[{label}]" for label in labels]
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # this should be handled by accelerate
 
-relation_classifier = opennre.get_model('ddi_bert-base-uncased_entity', '.')
+relation_classifier = opennre.get_model(args.classifier, '.')
 
 def label_logit_to_reward(logit, task, label):
     """
@@ -126,7 +126,7 @@ for label in labels:
     )
 
     txt_in_len = 1
-    txt_out_len = 100
+    txt_out_len = 101
 
     llm_model = AutoModelForCausalLMWithValueHead.from_pretrained(config.model_name)
     llm_model_ref = create_reference_model(llm_model)
@@ -208,5 +208,5 @@ for label in labels:
         plt.grid(True)
         plt.show()
 
-    llm_model.save_pretrained(f"dare_{args.llm}_{args.dataset}_{label}_rl")
-    llm_tokenizer.save_pretrained(f"dare_{args.llm}_{args.dataset}_{label}_rl")
+    llm_model.save_pretrained(f"dare_{args.llm}_{args.dataset}_train_{label}_finetuning_rl")
+    llm_tokenizer.save_pretrained(f"dare_{args.llm}_{args.dataset}_train_{label}_finetuning_rl")
