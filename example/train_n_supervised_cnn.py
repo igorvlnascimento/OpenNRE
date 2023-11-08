@@ -29,6 +29,10 @@ parser.add_argument('--only_test', action='store_true',
 parser.add_argument('--encoder', default='pcnn', choices=['pcnn', 'cnn'])
 parser.add_argument('--mask_entity', action='store_true', 
         help='Mask entity mentions')
+parser.add_argument('--synthetic', action='store_true', 
+        help='Use synthetic data')
+parser.add_argument('--synthetic_rl', action='store_true', 
+        help='Use RL synthetic data')
 
 # Data
 parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],
@@ -77,13 +81,18 @@ else:
 root_path = '.'
 sys.path.append(root_path)
 CKPT_PATH = Path('ckpt')
-DATASET_PATH = CKPT_PATH / args.dataset
-print(DATASET_PATH)
+if args.synthetic:
+    DATASET_PATH = CKPT_PATH / f"{args.dataset}_synt"
+elif args.synthetic_rl:
+    DATASET_PATH = CKPT_PATH / f"{args.dataset}_synt_rl"
+else:
+    DATASET_PATH = CKPT_PATH / args.dataset
+
 if args.mask_entity:
     ENCODER_PATH = DATASET_PATH / f"{args.encoder}_mask_entity"
 else:
     ENCODER_PATH = DATASET_PATH / args.encoder
-print(ENCODER_PATH)
+
 DATETIME_PATH = ENCODER_PATH / datetime.now().astimezone().strftime("%Y-%m-%d_%H:%M:%S")
 if args.dataset is not None:
     DATETIME_PATH.mkdir(parents=True, exist_ok=True)
@@ -93,8 +102,15 @@ if len(args.ckpt) == 0:
 
 if args.dataset != 'none':
     opennre.download(args.dataset, root_path=root_path)
-    args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_train.txt'.format(args.dataset))
-    args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_val.txt'.format(args.dataset))
+    if args.synthetic:
+        args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_train.txt'.format(args.dataset))
+        args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_val.txt'.format(args.dataset))
+    elif args.synthetic_rl:
+        args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_rl_train.txt'.format(args.dataset))
+        args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_synt_rl_val.txt'.format(args.dataset))
+    else:
+        args.train_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_train.txt'.format(args.dataset))
+        args.val_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_val.txt'.format(args.dataset))
     args.test_file = os.path.join(root_path, 'benchmark', args.dataset, '{}_test.txt'.format(args.dataset))
     if not os.path.exists(args.test_file):
         logging.warn("Test file {} does not exist! Use val file instead".format(args.test_file))
