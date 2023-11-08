@@ -88,6 +88,7 @@ elif args.synthetic_rl:
     DATASET_PATH = CKPT_PATH / f"{args.dataset}_synt_rl"
 else:
     DATASET_PATH = CKPT_PATH / args.dataset
+    
 if args.mask_entity:
     PRETRAIN_PATH = DATASET_PATH / f"{args.pretrain_path}_path_mask_entity"
 else:
