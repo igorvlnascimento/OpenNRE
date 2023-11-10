@@ -135,9 +135,11 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
             url = 'https://docs.google.com/uc?export=download&id=1wN6DFyR_pjGxWwkXQMVO4Xxcn5Q6B1lM'
             output = f"pretrain/nre/{model_name}.pth.tar"
             gdown.download(url, output, quiet=False)
-            #os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'pretrain/nre')  + ' ' + f"'https://docs.google.com/uc?export=download&id=1wN6DFyR_pjGxWwkXQMVO4Xxcn5Q6B1lM' -O pretrain/nre/{model_name}.pth.tar")
-        else:
-            print("Nothing")
+        elif 'semeval2018' in model_name:
+            os.makedirs(os.path.join(root_path, 'pretrain/nre'), exist_ok=True)
+            url = 'https://docs.google.com/uc?export=download&id=1XdysiFk_RF1nUg2YLtbL-mnAfRSVSHN8'
+            output = f"pretrain/nre/{model_name}.pth.tar"
+            gdown.download(url, output, quiet=False)
 
 def download(name, root_path=default_root_path):
     if not os.path.exists(os.path.join(root_path, 'benchmark')):
