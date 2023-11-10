@@ -68,7 +68,7 @@ labels = list(set(dataset['train']['label']))
 for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
-    generator = pipeline('text-generation', model=f'igorvln/dare_gpt2_ddi_train_{relation}_finetuning')
+    generator = pipeline('text-generation', model=f'igorvln/dare_gpt2_{args.dataset}_{relation}_finetuning')
     synthetic_texts = []
 
     for _ in tqdm(range(len(dataset_label["train"]))):

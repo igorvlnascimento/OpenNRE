@@ -94,8 +94,8 @@ def extract_output(model, texts, label):
     logits = []
     for text_formatted in text_sentences_formatted:
         result = model.infer(text_formatted)
-        if result[0] == label:
-            logits.append(torch.tensor(result[1]))
+        #if result[0] == label:
+        logits.append(torch.tensor(result[1]))
     return logits
 
 ctrl_str = [f"[{label}]" for label in labels]
@@ -166,6 +166,8 @@ for label in labels:
                 dict(),
             )
 
+            print(len(batch))
+
             #### prepend a random control token
             task_list = choices(ctrl_str, k=config.batch_size)
             game_data["query"] = [t + q for t, q in zip(task_list, batch["query"])]
@@ -173,6 +175,7 @@ for label in labels:
 
             #### get response from LLM
             response_tensors = []
+            print(len(query_tensors))
             for query in query_tensors:
                 while True:
                     response = ppo_trainer.generate(query, **generation_kwargs)
@@ -192,6 +195,7 @@ for label in labels:
 
             #### Run PPO training
             t = time.time()
+            print(len(query_tensors), len(response_tensors), len(rewards))
             stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
 
             for cs in ctrl_str:
