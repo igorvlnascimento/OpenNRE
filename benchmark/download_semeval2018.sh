@@ -4,5 +4,7 @@ wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=do
 wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1k0VBMq-VPD7_a2endtxXlGT2j1TSSM72' -O semeval2018_test.txt
 wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1XBWx_UzGfekVuwt5MYdaTNNyvzRVshb6' -O semeval2018_val.txt
 wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1kycnRnvRhjC4y-_B9_rJUZrNnGzPw8br' -O semeval2018_train_gpt.txt
-# wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1lowaa1xW8i96-CjisCPyX3jaug8aZlmC' -O semeval2018_synt_train.txt
-# wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=19vCZy7142xL7ODHChOno_RzRvcfeo03H' -O semeval2018_synt_val.txt
+wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=18tuJW5SslU40nqTLmASKYYQUVcG1F2g_' -O semeval2018_synt_train.txt
+wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1HrXuu-v-VaiEcit6ZJVybmhbMUO2pg39' -O semeval2018_synt_val.txt
+wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1bfXDKvg5HZ6Bev7mXTjGZKsu4ZCksGm1' -O semeval2018_all_train.txt
+wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1ZtzaaAofIhuApzi42Y_36SKkVVd3G9K3' -O semeval2018_all_synt.txt
