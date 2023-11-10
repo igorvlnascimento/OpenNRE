@@ -87,10 +87,10 @@ def download_semeval2018(root_path=default_root_path):
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1k0VBMq-VPD7_a2endtxXlGT2j1TSSM72' -O benchmark/semeval2018/semeval2018_test.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1XBWx_UzGfekVuwt5MYdaTNNyvzRVshb6' -O benchmark/semeval2018/semeval2018_val.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1kycnRnvRhjC4y-_B9_rJUZrNnGzPw8br' -O benchmark/semeval2018/semeval2018_train_gpt.txt")
-        # os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1lowaa1xW8i96-CjisCPyX3jaug8aZlmC' -O benchmark/semeval2018/semeval2018_synt_train.txt")
-        # os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=19vCZy7142xL7ODHChOno_RzRvcfeo03H' -O benchmark/semeval2018/semeval2018_synt_val.txt")
-        # os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1rEtUYx53sbO-2qX-N0kiGScClFrFO5rV' -O benchmark/semeval2018/semeval2018_all_train.txt")
-        # os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1cU8fbgSKhiNF-6k3WDG5n4OtcauFIhCM' -O benchmark/semeval2018/semeval2018_all_synt.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=18tuJW5SslU40nqTLmASKYYQUVcG1F2g_' -O benchmark/semeval2018/semeval2018_synt_train.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1HrXuu-v-VaiEcit6ZJVybmhbMUO2pg39' -O benchmark/semeval2018/semeval2018_synt_val.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1bfXDKvg5HZ6Bev7mXTjGZKsu4ZCksGm1' -O benchmark/semeval2018/semeval2018_all_train.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1ZtzaaAofIhuApzi42Y_36SKkVVd3G9K3' -O benchmark/semeval2018/semeval2018_all_synt.txt")
 
 def download_ddi(root_path=default_root_path):
     check_root()
