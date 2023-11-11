@@ -27,12 +27,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=42, type=int,
         help='Seed')
 
-# LLM
-parser.add_argument('--llm', default="igorvln/dare_gpt2_ddi_finetuning", type=str,
+#LLM
+parser.add_argument('--llm', default="none", type=str,
         help='LLM')
 
+# Generator model
+parser.add_argument('--generator_model', default="none", type=str,
+        help='Generator model')
+
 # Dataset
-parser.add_argument('--dataset', default="ddi", type=str,
+parser.add_argument('--dataset', default="none", type=str,
         help='Dataset')
 
 args = parser.parse_args()
@@ -62,14 +66,15 @@ dataset = dataset.map(lambda x: {
         literal_eval(x["text"])["relation"]
     }
 )
-entity = 'drug' if args.dataset == 'ddi' else 'entity'
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
         " ".join(["<s>"] + 
-        x["text"]["token"][:x["text"]["h"]["pos"][0]] + [f"{entity}_a"] + \
+        x["text"]["token"][:x["text"]["h"]["pos"][0]] + \
+            ['<SUB>'] + x["text"]["token"][x["text"]["h"]["pos"][0]:x["text"]["h"]["pos"][1]] + ['</SUB>'] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
-        [f"{entity}_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
+        ['<OBJ>'] + x["text"]["token"][x["text"]["t"]["pos"][0]:x["text"]["t"]["pos"][1]] + ['</OBJ>'] + \
+        x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
     }
 )
@@ -80,7 +85,7 @@ for label in labels:
     print(f"Finetuning GPT2 for label: {label}")
 
     dataset_label = dataset.filter(lambda x: x["label"] == label)
-    model = AutoModelForCausalLM.from_pretrained(args.llm)
+    model = AutoModelForCausalLM.from_pretrained(args.generator_model)
 
     MODELS_DIR = Path('ckpt')
     MODELS_PATH = MODELS_DIR / args.dataset / label

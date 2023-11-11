@@ -41,11 +41,11 @@ parser.add_argument('--llm', default="gpt2", type=str,
         help='LLM')
 
 # LLM
-parser.add_argument('--classifier', default="ddi_bert-base-uncased_entity", type=str,
+parser.add_argument('--classifier', default="none", type=str,
         help='RE classifier')
 
 # Dataset
-parser.add_argument('--dataset', default="ddi", type=str,
+parser.add_argument('--dataset', default="none", type=str,
         help='Dataset')
 
 args = parser.parse_args()
@@ -67,16 +67,15 @@ dataset = dataset.map(lambda x: {
         literal_eval(x["text"])["relation"]
     }
 )
-
-entity = "drug" if args.dataset == 'ddi' else "entity"
-
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join(
-        x["text"]["token"][:x["text"]["h"]["pos"][0]] + [f"{entity}_a"] + \
+        " ".join(["<s>"] + 
+        x["text"]["token"][:x["text"]["h"]["pos"][0]] + \
+            ['<SUB>'] + x["text"]["token"][x["text"]["h"]["pos"][0]:x["text"]["h"]["pos"][1]] + ['</SUB>'] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
-        [f"{entity}_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
+        ['<OBJ>'] + x["text"]["token"][x["text"]["t"]["pos"][0]:x["text"]["t"]["pos"][1]] + ['</OBJ>'] + \
+        x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
     }
 )
@@ -90,15 +89,21 @@ def format_sentences(texts):
     for text in texts:
         dict_format = {}
         tokenized_sentence = word_tokenize(text)
-        head_entity_index = tokenized_sentence.index(f'{entity}_a')
-        tail_entity_index = tokenized_sentence.index(f'{entity}_b')
-        dict_format['text'] = text
-        dict_format['h'] = {'pos': [head_entity_index, head_entity_index+1]}
-        dict_format['t'] = {'pos': [tail_entity_index, tail_entity_index+1]}
+        head_entity_start_index = tokenized_sentence.index('<SUB>')
+        head_entity_end_index = tokenized_sentence.index('</SUB>') - 1
+        tokenized_sentence.remove('<SUB>')
+        tokenized_sentence.remove('</SUB>')
+        tail_entity_start_index = tokenized_sentence.index('<OBJ>')
+        tail_entity_end_index = tokenized_sentence.index('</OBJ>') - 1
+        tokenized_sentence.remove('<OBJ>')
+        tokenized_sentence.remove('</OBJ>')
+        dict_format['text'] = " ".join(tokenized_sentence)
+        dict_format['h'] = {'pos': [head_entity_start_index, head_entity_end_index]}
+        dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
         sentences_formatted.append(dict_format.copy())
     return sentences_formatted
 
-def extract_output(model, texts, label):
+def extract_output(model, texts):
     text_sentences_formatted = format_sentences(texts)
     logits = []
     for text_formatted in text_sentences_formatted:
@@ -137,7 +142,7 @@ for label in labels:
     )
 
     txt_in_len = 1
-    txt_out_len = 101
+    txt_out_len = 105
 
     llm_model = AutoModelForCausalLMWithValueHead.from_pretrained(config.model_name)
     llm_model_ref = create_reference_model(llm_model)
@@ -189,7 +194,11 @@ for label in labels:
                     response_str = llm_tokenizer.decode(response[0])
                     first_sentence = sent_tokenize(response_str)[0]
                     tokenized_sentence = word_tokenize(first_sentence)[6:]
-                    if len(tokenized_sentence) >= 8 and f'{entity}_a' in tokenized_sentence and f'{entity}_b' in tokenized_sentence:
+                    if len(tokenized_sentence) >= 10 and \
+                        '<SUB>' in tokenized_sentence and \
+                        '</SUB>' in tokenized_sentence and \
+                        '<OBJ>' in tokenized_sentence and \
+                        '</OBJ>' in tokenized_sentence:
                         response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
                         break
                 response_tensors.append(response.squeeze())
@@ -197,7 +206,7 @@ for label in labels:
 
             #### sentiment analysis
             texts = [r for r in game_data["response"]]
-            logits = extract_output(relation_classifier, texts, label)
+            logits = extract_output(relation_classifier, texts)
             rewards = logits#label_logit_to_reward(logits, task_list, f"[{label}]")
 
             #### Run PPO training
