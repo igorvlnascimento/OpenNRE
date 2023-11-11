@@ -52,7 +52,7 @@ for i, _ in enumerate(tokens_test_sentences):
 
 
 ppls = []
-model_name = "igorvln/dare_{}_{}_train_{}_finetuning"
+model_name = "igorvln/dare_{}_{}_{}_finetuning"
 for test_sentence in test_sentences:
     sentence = test_sentence['token']
     relation = test_sentence['relation']

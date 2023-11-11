@@ -65,13 +65,11 @@ class SentenceREDataset(data.Dataset):
 
         number_class_id_0 = sum([self.rel2id[self.data[k]['relation']] == 0 for k in range(total)])
 
-        number_per_class = {}
+        number_per_class = {k:0 for k in self.rel2id.values()}
         for k in range(total):
             class_id = self.rel2id[self.data[k]['relation']]
             if class_id in number_per_class:
                 number_per_class[class_id] += 1
-            else:
-                number_per_class[class_id] = 1
 
         assert number_per_class[0] == number_class_id_0
         

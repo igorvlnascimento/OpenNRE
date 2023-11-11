@@ -10,6 +10,7 @@ from tqdm import tqdm
 from random import choices
 from datasets import Dataset
 from ast import literal_eval
+from pathlib import Path
 from nltk.tokenize import sent_tokenize, word_tokenize
 
 import matplotlib.pyplot as plt
@@ -54,6 +55,8 @@ set_seed(args.seed)
 
 np.random.seed(args.seed)
 
+root_path = '.'
+opennre.download(args.dataset, root_path=root_path)
 dataset = load_dataset('text', data_files={"train": [
     f"benchmark/{args.dataset}/{args.dataset}_train_gpt.txt"]})
 dataset = dataset['train']
@@ -65,13 +68,15 @@ dataset = dataset.map(lambda x: {
     }
 )
 
+entity = "drug" if args.dataset == 'ddi' else "entity"
+
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
         " ".join(
-        x["text"]["token"][:x["text"]["h"]["pos"][0]] + ["drug_a"] + \
+        x["text"]["token"][:x["text"]["h"]["pos"][0]] + [f"{entity}_a"] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
-        ["drug_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
+        [f"{entity}_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
     }
 )
@@ -80,21 +85,24 @@ labels = list(set(dataset['label']))
 def collator(data):
     return dict((key, [d[key] for d in data]) for key in data[0])
 
-def extract_output(model, texts, label):
-    text_sentences_formatted = []
+def format_sentences(texts):
+    sentences_formatted = []
     for text in texts:
         dict_format = {}
         tokenized_sentence = word_tokenize(text)
-        head_entity_index = tokenized_sentence.index('drug_a')
-        tail_entity_index = tokenized_sentence.index('drug_b')
+        head_entity_index = tokenized_sentence.index(f'{entity}_a')
+        tail_entity_index = tokenized_sentence.index(f'{entity}_b')
         dict_format['text'] = text
         dict_format['h'] = {'pos': [head_entity_index, head_entity_index+1]}
         dict_format['t'] = {'pos': [tail_entity_index, tail_entity_index+1]}
-        text_sentences_formatted.append(dict_format.copy())
+        sentences_formatted.append(dict_format.copy())
+    return sentences_formatted
+
+def extract_output(model, texts, label):
+    text_sentences_formatted = format_sentences(texts)
     logits = []
     for text_formatted in text_sentences_formatted:
         result = model.infer(text_formatted)
-        #if result[0] == label:
         logits.append(torch.tensor(result[1]))
     return logits
 
@@ -119,10 +127,13 @@ def label_logit_to_reward(logit, task, label):
             raise ValueError("task has to be in [0, 1, 2, 3]!")
     return logit
 
+MODELS_DIR = Path('ckpt')
+MODELS_PATH = MODELS_DIR / args.dataset / args.llm
+model_name = f"igorvln/dare_{args.llm}_{args.dataset}_finentuning"
 for label in labels:
     print(f"Training for label: {label}")
     config = PPOConfig(
-        model_name=f"igorvln/dare_{args.llm}_{args.dataset}_train_{label}_finetuning", steps=51200, learning_rate=1.41e-5, remove_unused_columns=False#, log_with="wandb"
+        model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False#, log_with="wandb"
     )
 
     txt_in_len = 1
@@ -142,7 +153,6 @@ for label in labels:
     ppo_trainer = PPOTrainer(config, llm_model, llm_model_ref, llm_tokenizer, dataset, data_collator=collator)
 
     ctrl_tokens = dict((s, llm_tokenizer.encode(s, return_tensors="pt").squeeze().to(device)) for s in ctrl_str)
-    print(ctrl_tokens)
 
     if ppo_trainer.accelerator.num_processes == 1:
         device = 0 if torch.cuda.is_available() else "cpu"  # to avoid a `pipeline` bug
@@ -166,36 +176,32 @@ for label in labels:
                 dict(),
             )
 
-            print(len(batch))
-
             #### prepend a random control token
             task_list = choices(ctrl_str, k=config.batch_size)
-            game_data["query"] = [t + q for t, q in zip(task_list, batch["query"])]
-            query_tensors = [torch.cat((ctrl_tokens[t], input_ids.squeeze())) for t, input_ids in zip(task_list, batch["input_ids"])]
+            game_data["query"] = [q for q in batch["query"]]
+            query_tensors = [input_ids.squeeze() for input_ids in batch["input_ids"]]
 
             #### get response from LLM
             response_tensors = []
-            print(len(query_tensors))
-            for query in query_tensors:
+            for query in tqdm(query_tensors):
                 while True:
                     response = ppo_trainer.generate(query, **generation_kwargs)
                     response_str = llm_tokenizer.decode(response[0])
                     first_sentence = sent_tokenize(response_str)[0]
                     tokenized_sentence = word_tokenize(first_sentence)[6:]
-                    if len(tokenized_sentence) >= 8 and 'drug_a' in tokenized_sentence and 'drug_b' in tokenized_sentence:
+                    if len(tokenized_sentence) >= 8 and f'{entity}_a' in tokenized_sentence and f'{entity}_b' in tokenized_sentence:
                         response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
                         break
                 response_tensors.append(response.squeeze())
             game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
             #### sentiment analysis
-            texts = [q + r for q, r in zip(batch["query"], game_data["response"])]
+            texts = [r for r in game_data["response"]]
             logits = extract_output(relation_classifier, texts, label)
-            rewards = label_logit_to_reward(logits, task_list, label)
+            rewards = logits#label_logit_to_reward(logits, task_list, f"[{label}]")
 
             #### Run PPO training
             t = time.time()
-            print(len(query_tensors), len(response_tensors), len(rewards))
             stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
 
             for cs in ctrl_str:
@@ -212,5 +218,9 @@ for label in labels:
         plt.grid(True)
         plt.show()
 
-    llm_model.save_pretrained(f"dare_{args.llm}_{args.dataset}_train_{label}_finetuning_rl")
-    llm_tokenizer.save_pretrained(f"dare_{args.llm}_{args.dataset}_train_{label}_finetuning_rl")
+    MODEL_NAME = f"dare_{args.llm}_{args.dataset}_{label}_finetuning_rl"
+    MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
+    MODELS_PATH_NAME.mkdir(parents=True, exist_ok=True)
+
+    llm_model.save_pretrained(MODELS_PATH_NAME)
+    llm_tokenizer.save_pretrained(MODELS_PATH_NAME)

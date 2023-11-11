@@ -28,7 +28,7 @@ parser.add_argument('--seed', default=42, type=int,
         help='Seed')
 
 # LLM
-parser.add_argument('--llm', default="igorvln/dare_gpt2_ddi", type=str,
+parser.add_argument('--llm', default="igorvln/dare_gpt2_ddi_finetuning", type=str,
         help='LLM')
 
 # Dataset
@@ -62,13 +62,14 @@ dataset = dataset.map(lambda x: {
         literal_eval(x["text"])["relation"]
     }
 )
+entity = 'drug' if args.dataset == 'ddi' else 'entity'
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
         " ".join(["<s>"] + 
-        x["text"]["token"][:x["text"]["h"]["pos"][0]] + ["drug_a"] + \
+        x["text"]["token"][:x["text"]["h"]["pos"][0]] + [f"{entity}_a"] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
-        ["drug_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
+        [f"{entity}_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
     }
 )
