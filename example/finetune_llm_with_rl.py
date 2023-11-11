@@ -129,7 +129,7 @@ def label_logit_to_reward(logit, task, label):
 
 MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
-model_name = f"igorvln/dare_{args.llm}_{args.dataset}_finentuning"
+model_name = f"igorvln/dare_{args.llm}_{args.dataset}_finetuning"
 for label in labels:
     print(f"Training for label: {label}")
     config = PPOConfig(
