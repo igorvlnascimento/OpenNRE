@@ -137,7 +137,7 @@ def download_custom_pretrain(model_name, root_path=default_root_path):
             gdown.download(url, output, quiet=False)
         elif 'semeval2018' in model_name:
             os.makedirs(os.path.join(root_path, 'pretrain/nre'), exist_ok=True)
-            url = 'https://docs.google.com/uc?export=download&id=1XdysiFk_RF1nUg2YLtbL-mnAfRSVSHN8'
+            url = 'https://docs.google.com/uc?export=download&id=183g90k1J50KYpt5LLPeam9BMOfm-L-Kf'
             output = f"pretrain/nre/{model_name}.pth.tar"
             gdown.download(url, output, quiet=False)
 

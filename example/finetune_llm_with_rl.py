@@ -19,7 +19,7 @@ tqdm.pandas()
 
 from datasets import load_dataset
 
-from transformers import AutoTokenizer, pipeline
+from transformers import AutoTokenizer
 
 from trl import PPOTrainer, PPOConfig, AutoModelForCausalLMWithValueHead, create_reference_model
 
@@ -133,10 +133,10 @@ def label_logit_to_reward(logit, task, label):
     return logit
 
 MODELS_DIR = Path('ckpt')
-MODELS_PATH = MODELS_DIR / args.dataset / args.llm
-model_name = f"igorvln/dare_{args.llm}_{args.dataset}_finetuning"
 for label in labels:
+    MODELS_PATH = MODELS_DIR / args.dataset / args.llm / label
     print(f"Training for label: {label}")
+    model_name = f"igorvln/dare_{args.llm}_{args.dataset}_{label}_finetuning"
     config = PPOConfig(
         model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False#, log_with="wandb"
     )
