@@ -133,6 +133,9 @@ rel2id = json.load(open(args.rel2id_file))
 acc, micro_f1, macro_f1, weighted_f1 = [], [], [], []
 for i in range(args.trials):
 
+    # Set random seed
+    set_seed(int(SEEDS[i]))
+
     # Define the sentence encoder
     if args.pooler == 'entity':
         sentence_encoder = opennre.encoder.BERTEntityEncoder(
@@ -166,9 +169,6 @@ for i in range(args.trials):
         lr=args.lr,
         opt='adamw'
     )
-
-    # Set random seed
-    set_seed(int(SEEDS[i]))
 
     # Train the model
     if not args.only_test:
