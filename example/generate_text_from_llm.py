@@ -16,13 +16,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=42, type=int,
         help='Seed')
 
-# LLM
-parser.add_argument('--llm', default="igorvln/dare_gpt2_ddi", type=str,
-        help='LLM')
-
 # Dataset
 parser.add_argument('--dataset', default="ddi", type=str,
         help='Dataset')
+
+# LLM
+parser.add_argument('--llm', default="gpt2", type=str,
+        help='LLM')
 
 args = parser.parse_args()
 
@@ -56,7 +56,8 @@ dataset = dataset.map(lambda x: {
 dataset = dataset.map(lambda x: {
     "text": 
         " ".join(
-        x["text"]["token"][:x["text"]["h"]["pos"][0]] + ["drug_a"] + \
+        x["text"]["token"][:x["text"]["h"]["pos"][0]] + \
+            ['<SUB>'] + x["text"]["token"][x["text"]["h"]["pos"][0]:x["text"]["h"]["pos"][1]] + ['</SUB>'] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
         ["drug_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
@@ -64,17 +65,16 @@ dataset = dataset.map(lambda x: {
 )
 
 labels = list(set(dataset['train']['label']))
-
+synthetic_texts = []
 for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
-    generator = pipeline('text-generation', model=f'igorvln/dare_gpt2_{args.dataset}_{relation}_finetuning')
-    synthetic_texts = []
+    generator = pipeline('text-generation', model=f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning')
 
     for _ in tqdm(range(len(dataset_label["train"]))):
         while True:
-            generated_text = generator("<s>", max_length=101, min_length=9, num_return_sequences=1, pad_token_id=50256)[0]       
-            first_sentence = sent_tokenize(generated_text["generated_text"])[0][4:]
+            generated_text = generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1)[0]       
+            first_sentence = sent_tokenize(generated_text["generated_text"])[0][generated_text["generated_text"].index(']')+2:]
             tokenized_sentence = word_tokenize(first_sentence)
             if len(tokenized_sentence) >= 8 and 'drug_a' in tokenized_sentence and 'drug_b' in tokenized_sentence:
                 synthetic_texts.append(tokenized_sentence)
@@ -82,9 +82,18 @@ for relation in labels:
             else:
                 continue
 
-    with open(f"benchmark/{args.dataset}/synt_{args.dataset}_{relation}_train.txt", "w") as f:
-        for text in synthetic_texts:
-            drug_a_idx = text.index('drug_a')
-            drug_b_idx = text.index('drug_b')
-            obj = {'token': text, 'h': {'name': 'drug_a', 'pos': [drug_a_idx, drug_a_idx+1]}, 't': {'name': 'drug_b', 'pos': [drug_b_idx, drug_b_idx+1]}, 'relation': relation}
-            f.write(str(obj) + "\n")
+with open(f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt", "w") as f:
+    for text in synthetic_texts:
+        entity_head_start_idx = text.index('<SUB>')
+        entity_head_end_idx = text.index('</SUB>') - 1
+        text.remove('<SUB>')
+        text.remove('</SUB>')
+        entity_tail_start_idx = text.index('<OBJ>')
+        entity_tail_end_idx = text.index('</OBJ>')
+        text.remove('<OBJ>')
+        text.remove('</OBJ>')
+        obj = {'token': text, 
+                'h': {'name': text[entity_head_start_idx:entity_head_end_idx], 'pos': [entity_head_start_idx, entity_head_end_idx]}, 
+                't': {'name': text[entity_tail_start_idx:entity_tail_end_idx], 'pos': [entity_tail_start_idx, entity_tail_end_idx]}, 
+                'relation': relation}
+        f.write(str(obj) + "\n")
