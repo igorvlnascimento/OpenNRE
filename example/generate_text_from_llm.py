@@ -20,6 +20,10 @@ parser.add_argument('--seed', default=42, type=int,
 parser.add_argument('--dataset', default="none", type=str,
         help='Dataset')
 
+# LLM
+parser.add_argument('--llm', default="gpt2", type=str,
+        help='LLM')
+
 args = parser.parse_args()
 
 # Set random seed
@@ -51,7 +55,7 @@ dataset = dataset.map(lambda x: {
 ## Preprocess dataset to mask entities with special tokens
 ddataset = dataset.map(lambda x: {
     "text": 
-        " ".join(["<s>"] + 
+        " ".join(
         x["text"]["token"][:x["text"]["h"]["pos"][0]] + \
             ['<SUB>'] + x["text"]["token"][x["text"]["h"]["pos"][0]:x["text"]["h"]["pos"][1]] + ['</SUB>'] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
@@ -62,17 +66,16 @@ ddataset = dataset.map(lambda x: {
 )
 
 labels = list(set(dataset['train']['label']))
-
+synthetic_texts = []
 for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
-    generator = pipeline('text-generation', model=f'igorvln/dare_gpt2_{args.dataset}_{relation}_finetuning')
-    synthetic_texts = []
+    generator = pipeline('text-generation', model=f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning')
 
     for _ in tqdm(range(len(dataset_label["train"]))):
         while True:
-            generated_text = generator("<s>", max_length=105, min_length=11, num_return_sequences=1, pad_token_id=50256)[0]       
-            first_sentence = sent_tokenize(generated_text["generated_text"])[0][4:]
+            generated_text = generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1)[0]       
+            first_sentence = sent_tokenize(generated_text["generated_text"])[0][generated_text["generated_text"].index(']')+2:]
             tokenized_sentence = word_tokenize(first_sentence)
             if len(tokenized_sentence) >= 10 and \
                 '<SUB>' in tokenized_sentence and \
@@ -84,18 +87,18 @@ for relation in labels:
             else:
                 continue
 
-    with open(f"benchmark/{args.dataset}/synt_{args.dataset}_{relation}_train.txt", "w") as f:
-        for text in synthetic_texts:
-            entity_head_start_idx = text.index('<SUB>')
-            entity_head_end_idx = text.index('</SUB>') - 1
-            text.remove('<SUB>')
-            text.remove('</SUB>')
-            entity_tail_start_idx = text.index('<OBJ>')
-            entity_tail_end_idx = text.index('</OBJ>')
-            text.remove('<OBJ>')
-            text.remove('</OBJ>')
-            obj = {'token': text, 
-                   'h': {'name': text[entity_head_start_idx:entity_head_end_idx], 'pos': [entity_head_start_idx, entity_head_end_idx]}, 
-                   't': {'name': text[entity_tail_start_idx:entity_tail_end_idx], 'pos': [entity_tail_start_idx, entity_tail_end_idx]}, 
-                   'relation': relation}
-            f.write(str(obj) + "\n")
+with open(f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt", "w") as f:
+    for text in synthetic_texts:
+        entity_head_start_idx = text.index('<SUB>')
+        entity_head_end_idx = text.index('</SUB>') - 1
+        text.remove('<SUB>')
+        text.remove('</SUB>')
+        entity_tail_start_idx = text.index('<OBJ>')
+        entity_tail_end_idx = text.index('</OBJ>')
+        text.remove('<OBJ>')
+        text.remove('</OBJ>')
+        obj = {'token': text, 
+                'h': {'name': text[entity_head_start_idx:entity_head_end_idx], 'pos': [entity_head_start_idx, entity_head_end_idx]}, 
+                't': {'name': text[entity_tail_start_idx:entity_tail_end_idx], 'pos': [entity_tail_start_idx, entity_tail_end_idx]}, 
+                'relation': relation}
+        f.write(str(obj) + "\n")
