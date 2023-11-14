@@ -137,6 +137,9 @@ word2vec = np.load(os.path.join(root_path, 'pretrain/glove/glove.6B.50d_mat.npy'
 acc, micro_f1, macro_f1, weighted_f1 = [], [], [], []
 for i in range(args.trials):
 
+    # Set random seed
+    set_seed(int(SEEDS[i]))
+
     # Define the sentence encoder
     if args.encoder == 'pcnn':
         sentence_encoder = opennre.encoder.PCNNEncoder(
@@ -186,9 +189,6 @@ for i in range(args.trials):
         lr=args.lr,
         opt='sgd'
     )
-
-    # Set random seed
-    set_seed(int(SEEDS[i]))
 
     # Train the model
     if not args.only_test:

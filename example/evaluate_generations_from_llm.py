@@ -16,9 +16,9 @@ from ast import literal_eval
 parser = argparse.ArgumentParser()
 
 # Dataset
-parser.add_argument('--dataset', default="ddi", type=str,
+parser.add_argument('--dataset', default="none", type=str,
         help='Dataset')
-parser.add_argument('--llm', default="gpt2", type=str,
+parser.add_argument('--llm', default="none", type=str,
         help='LLM')
 parser.add_argument('--synthetic', action='store_true', 
         help='Use synthetic data')

@@ -31,7 +31,7 @@ parser.add_argument('--llm', default="gpt2", type=str,
         help='LLM')
 
 # Dataset
-parser.add_argument('--dataset', default="ddi", type=str,
+parser.add_argument('--dataset', default="none", type=str,
         help='Dataset')
 
 args = parser.parse_args()
@@ -66,10 +66,7 @@ entity = 'drug' if args.dataset == 'ddi' else 'entity'
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join( ['<s>'] +
-        x["text"]["token"][:x["text"]["h"]["pos"][0]] + [f"{entity}_a"] + \
-        x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
-        [f"{entity}_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
+        " ".join( x["text"]["token"]),
     "label": x["label"]
     }
 )

@@ -17,7 +17,7 @@ parser.add_argument('--seed', default=42, type=int,
         help='Seed')
 
 # Dataset
-parser.add_argument('--dataset', default="ddi", type=str,
+parser.add_argument('--dataset', default="none", type=str,
         help='Dataset')
 
 # LLM
@@ -53,13 +53,14 @@ dataset = dataset.map(lambda x: {
 )
 
 ## Preprocess dataset to mask entities with special tokens
-dataset = dataset.map(lambda x: {
+ddataset = dataset.map(lambda x: {
     "text": 
         " ".join(
         x["text"]["token"][:x["text"]["h"]["pos"][0]] + \
             ['<SUB>'] + x["text"]["token"][x["text"]["h"]["pos"][0]:x["text"]["h"]["pos"][1]] + ['</SUB>'] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
-        ["drug_b"] + x["text"]["token"][x["text"]["t"]["pos"][1]:]),
+        ['<OBJ>'] + x["text"]["token"][x["text"]["t"]["pos"][0]:x["text"]["t"]["pos"][1]] + ['</OBJ>'] + \
+        x["text"]["token"][x["text"]["t"]["pos"][1]:]),
     "label": x["label"]
     }
 )
@@ -76,7 +77,11 @@ for relation in labels:
             generated_text = generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1)[0]       
             first_sentence = sent_tokenize(generated_text["generated_text"])[0][generated_text["generated_text"].index(']')+2:]
             tokenized_sentence = word_tokenize(first_sentence)
-            if len(tokenized_sentence) >= 8 and 'drug_a' in tokenized_sentence and 'drug_b' in tokenized_sentence:
+            if len(tokenized_sentence) >= 10 and \
+                '<SUB>' in tokenized_sentence and \
+                '</SUB>' in tokenized_sentence and \
+                '<OBJ>' in tokenized_sentence and \
+                '</OBJ>' in tokenized_sentence:
                 synthetic_texts.append(tokenized_sentence)
                 break
             else:
