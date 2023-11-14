@@ -66,7 +66,7 @@ entity = 'drug' if args.dataset == 'ddi' else 'entity'
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join( ['<s>'] + x["text"]["token"]),
+        " ".join( x["text"]["token"]),
     "label": x["label"]
     }
 )
