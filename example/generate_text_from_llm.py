@@ -3,7 +3,7 @@ import logging
 import argparse
 import nltk
 from tqdm import tqdm
-from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.tokenize import sent_tokenize
 from ast import literal_eval
 from datasets import load_dataset
 from transformers import pipeline, set_seed
@@ -74,9 +74,10 @@ for relation in labels:
 
     for _ in tqdm(range(len(dataset_label["train"]))):
         while True:
-            generated_text = generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1)[0]       
-            first_sentence = sent_tokenize(generated_text["generated_text"])[0][generated_text["generated_text"].index(']')+2:]
-            tokenized_sentence = word_tokenize(first_sentence)
+            generated_text = generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1, pad_token_id=50256)[0]["generated_text"]
+            first_sentence = sent_tokenize(generated_text)[0][generated_text.index(']')+2:]
+            tokenized_sentence = first_sentence.split()
+            print(tokenized_sentence)
             if len(tokenized_sentence) >= 10 and \
                 '<SUB>' in tokenized_sentence and \
                 '</SUB>' in tokenized_sentence and \
