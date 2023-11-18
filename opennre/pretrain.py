@@ -225,8 +225,12 @@ def get_model(model_name, root_path=default_root_path):
     elif 'bert' in model_name:
         download_custom_pretrain(model_name, root_path=root_path)
         download('bert_base_uncased', root_path=root_path)
-        download('ddi', root_path=root_path)
-        rel2id = json.load(open(os.path.join(root_path, 'benchmark/ddi/ddi_rel2id.json')))
+        if 'ddi' in model_name:
+            dataset = 'ddi'
+        else:
+            dataset = 'semeval2018'
+        download(dataset, root_path=root_path)
+        rel2id = json.load(open(os.path.join(root_path, f'benchmark/{dataset}/{dataset}_rel2id.json')))
         if 'entity' in model_name:
             sentence_encoder = encoder.BERTEntityEncoder(
                 max_length=128, pretrain_path=os.path.join(root_path, 'pretrain/bert-base-uncased'))
