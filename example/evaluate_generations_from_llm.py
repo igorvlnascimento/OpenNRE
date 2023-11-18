@@ -52,13 +52,13 @@ for i, _ in enumerate(tokens_test_sentences):
 
 
 ppls = []
-model_name = "igorvln/dare_{}_{}_{}_finetuning"
+model_name = "igorvln/dare_{}_{}_byrelation_finetuning"
 for test_sentence in test_sentences:
     sentence = test_sentence['token']
     relation = test_sentence['relation']
-    llm_model = AutoModelForCausalLM.from_pretrained(model_name.format(args.llm, args.dataset, relation))
-    llm_tokenizer = AutoTokenizer.from_pretrained(model_name.format(args.llm, args.dataset, relation))
-    inputs_wiki_text = llm_tokenizer(sentence, return_tensors = "pt")
+    llm_model = AutoModelForCausalLM.from_pretrained(model_name.format(args.llm, args.dataset))
+    llm_tokenizer = AutoTokenizer.from_pretrained(model_name.format(args.llm, args.dataset))
+    inputs_wiki_text = llm_tokenizer(f"[{relation}] {sentence}", return_tensors = "pt")
     loss = llm_model(input_ids = inputs_wiki_text["input_ids"], labels = inputs_wiki_text["input_ids"]).loss
     ppl = torch.exp(loss)
     ppls.append(ppl.item())
