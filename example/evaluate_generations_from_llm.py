@@ -27,6 +27,10 @@ parser.add_argument('--synthetic_rl', action='store_true',
 
 args = parser.parse_args()
 
+root_path = '.'
+if args.dataset != 'none':
+    opennre.download(args.dataset, root_path=root_path)
+    
 train_dataset = f'{args.dataset}_all_train.txt'
 if args.synthetic:
     train_dataset = f'{args.dataset}_all_synt.txt'
