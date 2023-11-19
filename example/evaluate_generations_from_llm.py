@@ -42,7 +42,10 @@ with open(f'benchmark/{args.dataset}/{train_dataset}', 'r') as gpt_txt:
 
 train_sentences = []
 for i, _ in enumerate(tokens_train_sentences):
-  train_sentences.append(" ".join(literal_eval(tokens_train_sentences[i])['token']))
+  train_sentences.append(
+      {'token': " ".join(literal_eval(tokens_train_sentences[i])['token']),
+       'relation': literal_eval(tokens_train_sentences[i])['relation']}
+  )
 
 with open(f'benchmark/{args.dataset}/{args.dataset}_test.txt', 'r') as gpt_txt:
     tokens_test_sentences = gpt_txt.read().splitlines()
