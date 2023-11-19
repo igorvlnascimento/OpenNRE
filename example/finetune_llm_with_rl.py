@@ -189,12 +189,13 @@ for epoch in range(2):
                 response = ppo_trainer.generate(query, **generation_kwargs)
                 response_str = llm_tokenizer.decode(response[0])
                 first_sentence = sent_tokenize(response_str)[0]
-                tokenized_sentence = word_tokenize(first_sentence)[6:]
+                tokenized_sentence = first_sentence.split()
                 if len(tokenized_sentence) >= 9 and \
                     '<SUB>' in tokenized_sentence and \
                     '</SUB>' in tokenized_sentence and \
                     '<OBJ>' in tokenized_sentence and \
                     '</OBJ>' in tokenized_sentence:
+                    
                     response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
                     break
             response_tensors.append(response.squeeze())

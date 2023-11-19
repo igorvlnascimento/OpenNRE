@@ -37,7 +37,7 @@ if args.synthetic:
 elif args.synthetic_rl:
     train_dataset = f'{args.dataset}_all_synt_rl.txt'
 
-with open(f'benchmark/{args.dataset}/{args.dataset}_all_synt.txt', 'r') as gpt_txt:
+with open(f'benchmark/{args.dataset}/{train_dataset}', 'r') as gpt_txt:
     tokens_train_sentences = gpt_txt.read().splitlines()
 
 train_sentences = []
@@ -57,12 +57,12 @@ for i, _ in enumerate(tokens_test_sentences):
 
 ppls = []
 model_name = "igorvln/dare_{}_{}_byrelation_finetuning"
-for test_sentence in test_sentences:
-    sentence = test_sentence['token']
-    relation = test_sentence['relation']
+for train_sentence in train_sentences:
+    sentence = train_sentence['token']
+    relation = train_sentence['relation']
     llm_model = AutoModelForCausalLM.from_pretrained(model_name.format(args.llm, args.dataset))
     llm_tokenizer = AutoTokenizer.from_pretrained(model_name.format(args.llm, args.dataset))
-    inputs_wiki_text = llm_tokenizer(f"[{relation}] {sentence}", return_tensors = "pt")
+    inputs_wiki_text = llm_tokenizer(sentence, return_tensors = "pt")
     loss = llm_model(input_ids = inputs_wiki_text["input_ids"], labels = inputs_wiki_text["input_ids"]).loss
     ppl = torch.exp(loss)
     ppls.append(ppl.item())
