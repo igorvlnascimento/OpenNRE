@@ -1,8 +1,3 @@
-import nltk
-from nltk.lm.preprocessing import padded_everygram_pipeline
-from nltk.lm import MLE
-from nltk.lm import Vocabulary
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import numpy as np
@@ -10,8 +5,10 @@ import numpy as np
 import torch
 import opennre
 import argparse
+import evaluate
 
 from ast import literal_eval
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 
@@ -26,6 +23,9 @@ parser.add_argument('--synthetic_rl', action='store_true',
         help='Use RL synthetic data')
 
 args = parser.parse_args()
+
+bleu = evaluate.load('bleu')
+rouge = evaluate.load('rouge')
 
 root_path = '.'
 if args.dataset != 'none':
@@ -51,47 +51,36 @@ with open(f'benchmark/{args.dataset}/{args.dataset}_test.txt', 'r') as gpt_txt:
     tokens_test_sentences = gpt_txt.read().splitlines()
 
 test_sentences = []
+sentences_by_relation = {}
 for i, _ in enumerate(tokens_test_sentences):
-   test_sentences.append(
-       {'token': " ".join(literal_eval(tokens_test_sentences[i])['token']), 
-        'relation': literal_eval(tokens_test_sentences[i])['relation']}
+    sentence = " ".join(literal_eval(tokens_test_sentences[i])['token'])
+    relation = literal_eval(tokens_test_sentences[i])['relation']
+    if relation in sentences_by_relation:
+        sentences_by_relation[relation].append(sentence)
+    else:
+        sentences_by_relation[relation] = [sentence]
+    test_sentences.append(
+       {
+            'token': sentence, 
+            'relation': relation
+       }
     )
-
-
+   
 ppls = []
+predictions = []
+references = []
 model_name = "igorvln/dare_{}_{}_byrelation_finetuning"
-for train_sentence in train_sentences:
+for train_sentence in tqdm(train_sentences):
     sentence = train_sentence['token']
     relation = train_sentence['relation']
+    predictions.append(sentence)
+    references.append(sentences_by_relation[relation])
     llm_model = AutoModelForCausalLM.from_pretrained(model_name.format(args.llm, args.dataset))
     llm_tokenizer = AutoTokenizer.from_pretrained(model_name.format(args.llm, args.dataset))
     inputs_wiki_text = llm_tokenizer(sentence, return_tensors = "pt")
     loss = llm_model(input_ids = inputs_wiki_text["input_ids"], labels = inputs_wiki_text["input_ids"]).loss
     ppl = torch.exp(loss)
     ppls.append(ppl.item())
-
-# tokenized_text = [list(map(str.lower, nltk.tokenize.word_tokenize(sent))) for sent in train_sentences]
-
-# n = 2
-# train_data = [nltk.bigrams(t,  pad_right=True, pad_left=True, left_pad_symbol="<s>", right_pad_symbol="</s>") for t in tokenized_text]
-# words = [word for sent in tokenized_text for word in sent]
-# words.extend(["<s>", "</s>"])
-# padded_vocab = Vocabulary(words)
-# model = MLE(n)
-# model.fit(train_data, padded_vocab)
-
-# tokenized_text = [list(map(str.lower, nltk.tokenize.word_tokenize(sent))) for sent in test_sentences]
-
-# test_data = [nltk.bigrams(t,  pad_right=True, pad_left=True, left_pad_symbol="<s>", right_pad_symbol="</s>") for t in tokenized_text]
-# for test in test_data:
-#    print ("MLE Estimates:", [((ngram[-1], ngram[:-1]),model.score(ngram[-1], ngram[:-1])) for ngram in test])
-
-# test_data = [nltk.bigrams(t,  pad_right=True, pad_left=True, left_pad_symbol="<s>", right_pad_symbol="</s>") for t in tokenized_text]
-# perplexities = []
-# for i, test in enumerate(test_data):
-#   perplexity = model.perplexity(test)
-#   perplexities.append(perplexity)
-  #print("PP({0}):{1}".format(test_sentences[i], perplexity))
 
 def calculate_inception_score(texts, n_split=10, eps=1E-16):
     # load model
@@ -132,3 +121,6 @@ is_avg, is_std = calculate_inception_score(tokens_train_sentences)
 
 print(f"Perplexity mean: {np.mean(ppls)}")
 print(f"Inception score average: {is_avg}, Inception score Std: {is_std}")
+print(f"BLEU results: {bleu.compute(predictions=predictions, references=references, 
+          max_order = 4)}")
+print(f"ROUGE results: {rouge.compute(predictions=predictions, references=references)}")
