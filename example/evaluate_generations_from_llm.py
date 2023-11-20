@@ -121,6 +121,5 @@ is_avg, is_std = calculate_inception_score(tokens_train_sentences)
 
 print(f"Perplexity mean: {np.mean(ppls)}")
 print(f"Inception score average: {is_avg}, Inception score Std: {is_std}")
-print(f"BLEU results: {bleu.compute(predictions=predictions, references=references, 
-          max_order = 4)}")
+print(f"BLEU results: {bleu.compute(predictions=predictions, references=references, max_order = 4)}")
 print(f"ROUGE results: {rouge.compute(predictions=predictions, references=references)}")
