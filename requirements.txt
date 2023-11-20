@@ -14,3 +14,4 @@ trl
 xformers
 gdown
 evaluate
+rouge_score
