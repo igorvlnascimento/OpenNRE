@@ -198,7 +198,7 @@ for epoch in range(2):
                     
                     response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
                     break
-            response_tensors.append(response.squeeze())
+            response_tensors.append(response)
         game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
         #### sentiment analysis
