@@ -88,7 +88,7 @@ def format_sentences(texts):
     sentences_formatted = []
     for text in texts:
         dict_format = {}
-        tokenized_sentence = word_tokenize(text)
+        tokenized_sentence = text.split()[1:]
         head_entity_start_index = tokenized_sentence.index('<SUB>')
         head_entity_end_index = tokenized_sentence.index('</SUB>') - 1
         tokenized_sentence.remove('<SUB>')
@@ -129,7 +129,7 @@ def label_logit_to_reward(logit, task, labels):
             pass
         else:
             raise ValueError("task has to be in [0, 1, 2, 3]!")
-#     return logit
+    return logits
 
 MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
@@ -138,8 +138,8 @@ config = PPOConfig(
     model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False#, log_with="wandb"
 )
 
-txt_in_len = 3
-txt_out_len = 103
+txt_in_len = 1
+txt_out_len = 101
 
 llm_model = AutoModelForCausalLMWithValueHead.from_pretrained(config.model_name)
 llm_model_ref = create_reference_model(llm_model)
@@ -147,7 +147,7 @@ llm_tokenizer = AutoTokenizer.from_pretrained(config.model_name)
 
 llm_tokenizer.pad_token = llm_tokenizer.eos_token
 
-dataset = dataset.map(lambda x: {"query": f"{x['label']} ", "input_ids": llm_tokenizer.encode(f"{x['label']} ", return_tensors="pt")}, batched=False)
+dataset = dataset.map(lambda x: {"query": f"[{x['label']}] ", "input_ids": llm_tokenizer.encode(f"[{x['label']}] ", return_tensors="pt")}, batched=False)
 
 dataset = Dataset.from_dict(dataset[:])
 dataset.set_format("pytorch")
@@ -186,7 +186,7 @@ for epoch in range(2):
         response_tensors = []
         for query in tqdm(query_tensors):
             while True:
-                response = ppo_trainer.generate(query, **generation_kwargs)
+                response = llm_model.generate(query, **generation_kwargs)
                 response_str = llm_tokenizer.decode(response[0])
                 first_sentence = sent_tokenize(response_str)[0]
                 tokenized_sentence = first_sentence.split()
