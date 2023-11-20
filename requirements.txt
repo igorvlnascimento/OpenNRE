@@ -13,3 +13,4 @@ nltk
 trl
 xformers
 gdown
+evaluate
