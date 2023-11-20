@@ -109,7 +109,7 @@ def extract_output(model, texts):
     labels = []
     for text_formatted in text_sentences_formatted:
         result = model.infer(text_formatted)
-        logits.append(torch.tensor(result[1]))
+        logits.append(torch.tensor(result[1]).squeeze())
         labels.append(result[0])
     return logits, labels
 
@@ -198,13 +198,14 @@ for epoch in range(2):
                     
                     response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
                     break
-            response_tensors.append(response)
+            response_tensors.append(response.squeeze())
         game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
         #### sentiment analysis
         texts = [r for r in game_data["response"]]
         logits, labels = extract_output(relation_classifier, texts)
         rewards = label_logit_to_reward(logits, task_list, labels)
+        query_tensors = [query.squeeze() for query in query_tensors]
 
         #### Run PPO training
         t = time.time()
@@ -224,7 +225,7 @@ for ctrl_s in ctrl_str:
     plt.grid(True)
     plt.show()
 
-MODEL_NAME = f"dare_{args.llm}_{args.dataset}_byrelation_finetuning_rl"
+MODEL_NAME = f"dare_{args.llm}_{args.dataset}_byrelation_finetuning_with_rl"
 MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
 MODELS_PATH_NAME.mkdir(parents=True, exist_ok=True)
 
