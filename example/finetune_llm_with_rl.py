@@ -84,24 +84,40 @@ labels = list(set(dataset['label']))
 def collator(data):
     return dict((key, [d[key] for d in data]) for key in data[0])
 
+def validate_sentence(tokenized_sentence):
+    first_sub = False
+    second_sub = False
+    first_obj = False
+    second_obj = False
+    indexes = [-1, -1, -1, -1]
+    for i, token in enumerate(tokenized_sentence):
+        if '<SUB>' in token:
+            first_sub = True
+            indexes[0] = i
+        if '</SUB>' in token:
+            second_sub = True
+            indexes[1] = i
+        if '<OBJ>' in token:
+            first_obj = True
+            indexes[2] = i
+        if '</OBJ>' in token:
+            second_obj = True
+            indexes[3] = i
+    return first_sub and second_sub and first_obj and second_obj, indexes
+
 def format_sentences(texts):
     sentences_formatted = []
     for text in texts:
         dict_format = {}
-        tokenized_sentence = text.split()[1:]
-        if len(tokenized_sentence) >= 9 and \
-            '<SUB>' in tokenized_sentence and \
-            '</SUB>' in tokenized_sentence and \
-            '<OBJ>' in tokenized_sentence and \
-            '</OBJ>' in tokenized_sentence:
-            head_entity_start_index = tokenized_sentence.index('<SUB>')
-            head_entity_end_index = tokenized_sentence.index('</SUB>') - 1
-            tokenized_sentence.remove('<SUB>')
-            tokenized_sentence.remove('</SUB>')
-            tail_entity_start_index = tokenized_sentence.index('<OBJ>')
-            tail_entity_end_index = tokenized_sentence.index('</OBJ>') - 1
-            tokenized_sentence.remove('<OBJ>')
-            tokenized_sentence.remove('</OBJ>')
+        tokenized_sentence = text.split()
+        valid, indexes = validate_sentence(tokenized_sentence)
+        if valid:
+            head_entity_start_index = indexes[0]
+            head_entity_end_index = indexes[1] - 1
+            tail_entity_start_index = indexes[2] - 2
+            tail_entity_end_index = indexes[3] - 3
+            for i in range(len(indexes) - 1, 0, -1):
+                del tokenized_sentence[indexes[i]]
             dict_format['text'] = " ".join(tokenized_sentence)
             dict_format['h'] = {'pos': [head_entity_start_index, head_entity_end_index]}
             dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
@@ -116,7 +132,7 @@ def extract_output(model, texts):
     labels = []
     for text_formatted in text_sentences_formatted:
         if text_formatted == []:
-            logits.append(torch.tensor(-0.01))
+            logits.append(torch.tensor(-0.1))
             labels.append("none")
         else:
             result = model.infer(text_formatted)
@@ -137,7 +153,7 @@ def label_logit_to_reward(logit, task, labels):
         if labels[i] == "none":
             pass
         elif task[i] != f"[{labels[i]}]":
-            logit[i] = logit[i] - 1
+            logit[i] = -logit[i] / 2
         elif task[i] == f"[{labels[i]}]":
             pass
         else:
@@ -148,7 +164,7 @@ MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
 model_name = f"igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning"
 config = PPOConfig(
-    model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb"
+    model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb", batch_size=3
 )
 
 txt_in_len = 1
@@ -160,7 +176,7 @@ llm_tokenizer = AutoTokenizer.from_pretrained(config.model_name)
 
 llm_tokenizer.pad_token = llm_tokenizer.eos_token
 
-dataset = dataset.map(lambda x: {"query": f"[{x['label']}] ", "input_ids": llm_tokenizer.encode(f"[{x['label']}] ", return_tensors="pt")}, batched=False)
+dataset = dataset.map(lambda x: {"query": " ", "input_ids": llm_tokenizer.encode(" ", return_tensors="pt")}, batched=False)
 
 dataset = Dataset.from_dict(dataset[:])
 dataset.set_format("pytorch")
@@ -193,15 +209,16 @@ for epoch in range(2):
 
         #### prepend a random control token
         task_list = choices(ctrl_str, k=config.batch_size)
-        game_data["query"] = [q for q in batch["query"]]
-        query_tensors = [input_ids for input_ids in batch["input_ids"]]
+        game_data["query"] = [t for t in task_list]
+        query_tensors = [llm_tokenizer.encode(query, return_tensors='pt') for query in game_data["query"]]
 
         #### get response from LLM
         response_tensors = []
-        for query in tqdm(query_tensors):
+        for query in tqdm(query_tensors[:3]):
             response = llm_model.generate(query, **generation_kwargs)
             response_tensors.append(response.squeeze()[-txt_out_len:])
-            # response_str = llm_tokenizer.decode(response_tensors[0])
+            # response_str = llm_tokenizer.decode(response[0])
+            # print(response_str)
             # first_sentence = sent_tokenize(response_str)[0]
             # tokenized_sentence = first_sentence.split()    
             # response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
@@ -216,7 +233,7 @@ for epoch in range(2):
 
         #### Run PPO training
         t = time.time()
-        stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
+        stats = ppo_trainer.step(query_tensors[:3], response_tensors, rewards)
 
         for cs in ctrl_str:
             key = "env/reward_" + cs.strip("[]")
