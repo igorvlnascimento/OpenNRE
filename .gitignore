@@ -130,3 +130,4 @@ benchmark
 opennre-egg.info
 
 *.sh
+wandb
