@@ -214,7 +214,7 @@ for epoch in range(2):
 
         #### Run PPO training
         t = time.time()
-        stats = ppo_trainer.step(query_tensors[:1], response_tensors, rewards)
+        stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
 
         for cs in ctrl_str:
             key = "env/reward_" + cs.strip("[]")
