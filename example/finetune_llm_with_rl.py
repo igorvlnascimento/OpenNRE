@@ -107,11 +107,7 @@ def format_sentences(texts):
             dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
             sentences_formatted.append(dict_format.copy())
         else:
-            points = ('<SUB>' not in tokenized_sentence) + \
-                     ('</SUB>' not in tokenized_sentence) + \
-                     ('<OBJ>' not in tokenized_sentence) + \
-                     ('</OBJ>' not in tokenized_sentence)
-            sentences_formatted.append([-(.25*points)])
+            sentences_formatted.append([])
     return sentences_formatted
 
 def extract_output(model, texts):
@@ -119,9 +115,8 @@ def extract_output(model, texts):
     logits = []
     labels = []
     for text_formatted in text_sentences_formatted:
-        print(text_formatted)
-        if type(text_formatted) == list:
-            logits.append(torch.tensor(text_formatted[0]))
+        if text_formatted == []:
+            logits.append(torch.tensor(-0.01))
             labels.append("none")
         else:
             result = model.infer(text_formatted)
@@ -205,11 +200,12 @@ for epoch in range(2):
         response_tensors = []
         for query in tqdm(query_tensors):
             response = llm_model.generate(query, **generation_kwargs)
-            response_str = llm_tokenizer.decode(response[0])
-            first_sentence = sent_tokenize(response_str)[0]
-            tokenized_sentence = first_sentence.split()    
-            response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
-            response_tensors.append(response.squeeze())
+            response_tensors.append(response.squeeze()[-txt_out_len:])
+            # response_str = llm_tokenizer.decode(response_tensors[0])
+            # first_sentence = sent_tokenize(response_str)[0]
+            # tokenized_sentence = first_sentence.split()    
+            # response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
+            #response_tensors.append(response.squeeze())
         game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
         #### relation extraction
