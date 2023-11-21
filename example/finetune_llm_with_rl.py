@@ -193,7 +193,7 @@ for epoch in range(2):
 
         #### prepend a random control token
         task_list = choices(ctrl_str, k=config.batch_size)
-        game_data["query"] = [t + q for t, q in zip(task_list, batch["query"])]
+        game_data["query"] = [q for q in batch["query"]]
         query_tensors = [input_ids for input_ids in batch["input_ids"]]
 
         #### get response from LLM
