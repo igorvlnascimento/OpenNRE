@@ -148,7 +148,7 @@ MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
 model_name = f"igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning"
 config = PPOConfig(
-    model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False#, log_with="wandb"
+    model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb"
 )
 
 txt_in_len = 1
@@ -206,7 +206,7 @@ for epoch in range(2):
             response_tensors.append(response.squeeze())
         game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
-        #### sentiment analysis
+        #### relation extraction
         texts = [r for r in game_data["response"]]
         logits, labels = extract_output(relation_classifier, texts)
         rewards = label_logit_to_reward(logits, task_list, labels)
@@ -221,14 +221,14 @@ for epoch in range(2):
             stats[key] = np.mean([r.cpu().numpy() for r, t in zip(rewards, task_list) if t == cs])
         ppo_trainer.log_stats(stats, game_data, rewards)
 
-for ctrl_s in ctrl_str:
-    plt.hist(
-        [r for r, t in zip(logs["env/reward_dist"], task_list) if t == ctrl_s], density=True, alpha=0.5, label=ctrl_s
-    )
-    plt.legend(loc="best")
-    plt.title("reward distribution")
-    plt.grid(True)
-    plt.show()
+# for ctrl_s in ctrl_str:
+#     plt.hist(
+#         [r for r, t in zip(logs["env/reward_dist"], task_list) if t == ctrl_s], density=True, alpha=0.5, label=ctrl_s
+#     )
+#     plt.legend(loc="best")
+#     plt.title("reward distribution")
+#     plt.grid(True)
+#     plt.show()
 
 MODEL_NAME = f"dare_{args.llm}_{args.dataset}_byrelation_finetuning_with_rl"
 MODELS_PATH_NAME = MODELS_PATH / MODEL_NAME
