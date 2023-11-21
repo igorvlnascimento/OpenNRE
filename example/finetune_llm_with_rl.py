@@ -107,7 +107,11 @@ def format_sentences(texts):
             dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
             sentences_formatted.append(dict_format.copy())
         else:
-            sentences_formatted.append([])
+            points = ('<SUB>' not in tokenized_sentence) + \
+                     ('</SUB>' not in tokenized_sentence) + \
+                     ('<OBJ>' not in tokenized_sentence) + \
+                     ('</OBJ>' not in tokenized_sentence)
+            sentences_formatted.append([-(.25*points)])
     return sentences_formatted
 
 def extract_output(model, texts):
@@ -115,8 +119,9 @@ def extract_output(model, texts):
     logits = []
     labels = []
     for text_formatted in text_sentences_formatted:
-        if text_formatted == []:
-            logits.append(torch.tensor(-1.0))
+        print(text_formatted)
+        if type(text_formatted) == list:
+            logits.append(torch.tensor(text_formatted[0]))
             labels.append("none")
         else:
             result = model.infer(text_formatted)
@@ -137,7 +142,7 @@ def label_logit_to_reward(logit, task, labels):
         if labels[i] == "none":
             pass
         elif task[i] != f"[{labels[i]}]":
-            logit[i] = -logit[i]
+            logit[i] = logit[i] - 1
         elif task[i] == f"[{labels[i]}]":
             pass
         else:
@@ -175,13 +180,13 @@ else:
     device = ppo_trainer.accelerator.device
 
 generation_kwargs = {
-    "min_length": 9,
+    "min_length": -1,
     "top_k": 0.0,
     "top_p": 1.0,
     "do_sample": True,
     "pad_token_id": llm_tokenizer.eos_token_id,
     "max_new_tokens": txt_out_len,
-    "eos_token_id": 2,
+    "eos_token_id": -1,
 }
 
 for epoch in range(2):
