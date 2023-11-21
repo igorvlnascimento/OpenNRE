@@ -89,18 +89,25 @@ def format_sentences(texts):
     for text in texts:
         dict_format = {}
         tokenized_sentence = text.split()[1:]
-        head_entity_start_index = tokenized_sentence.index('<SUB>')
-        head_entity_end_index = tokenized_sentence.index('</SUB>') - 1
-        tokenized_sentence.remove('<SUB>')
-        tokenized_sentence.remove('</SUB>')
-        tail_entity_start_index = tokenized_sentence.index('<OBJ>')
-        tail_entity_end_index = tokenized_sentence.index('</OBJ>') - 1
-        tokenized_sentence.remove('<OBJ>')
-        tokenized_sentence.remove('</OBJ>')
-        dict_format['text'] = " ".join(tokenized_sentence)
-        dict_format['h'] = {'pos': [head_entity_start_index, head_entity_end_index]}
-        dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
-        sentences_formatted.append(dict_format.copy())
+        if len(tokenized_sentence) >= 9 and \
+            '<SUB>' in tokenized_sentence and \
+            '</SUB>' in tokenized_sentence and \
+            '<OBJ>' in tokenized_sentence and \
+            '</OBJ>' in tokenized_sentence:
+            head_entity_start_index = tokenized_sentence.index('<SUB>')
+            head_entity_end_index = tokenized_sentence.index('</SUB>') - 1
+            tokenized_sentence.remove('<SUB>')
+            tokenized_sentence.remove('</SUB>')
+            tail_entity_start_index = tokenized_sentence.index('<OBJ>')
+            tail_entity_end_index = tokenized_sentence.index('</OBJ>') - 1
+            tokenized_sentence.remove('<OBJ>')
+            tokenized_sentence.remove('</OBJ>')
+            dict_format['text'] = " ".join(tokenized_sentence)
+            dict_format['h'] = {'pos': [head_entity_start_index, head_entity_end_index]}
+            dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
+            sentences_formatted.append(dict_format.copy())
+        else:
+            sentences_formatted.append([])
     return sentences_formatted
 
 def extract_output(model, texts):
@@ -108,9 +115,13 @@ def extract_output(model, texts):
     logits = []
     labels = []
     for text_formatted in text_sentences_formatted:
-        result = model.infer(text_formatted)
-        logits.append(torch.tensor(result[1]).squeeze())
-        labels.append(result[0])
+        if text_formatted == []:
+            logits.append(torch.tensor([-1.0]))
+            labels.append("none")
+        else:
+            result = model.infer(text_formatted)
+            logits.append(torch.tensor(result[1]).squeeze())
+            labels.append(result[0])
     return logits, labels
 
 ctrl_str = [f"[{label}]" for label in labels]
@@ -123,7 +134,9 @@ def label_logit_to_reward(logit, task, labels):
     Take the positive sentiment logit and scale it for the task.
     """
     for i in range(len(logit)):
-        if task[i] != f"[{labels[i]}]":
+        if labels[i] == "none":
+            pass
+        elif task[i] != f"[{labels[i]}]":
             logit[i] = -logit[i]
         elif task[i] == f"[{labels[i]}]":
             pass
@@ -185,19 +198,11 @@ for epoch in range(2):
         #### get response from LLM
         response_tensors = []
         for query in tqdm(query_tensors):
-            while True:
-                response = llm_model.generate(query, **generation_kwargs)
-                response_str = llm_tokenizer.decode(response[0])
-                first_sentence = sent_tokenize(response_str)[0]
-                tokenized_sentence = first_sentence.split()
-                if len(tokenized_sentence) >= 9 and \
-                    '<SUB>' in tokenized_sentence and \
-                    '</SUB>' in tokenized_sentence and \
-                    '<OBJ>' in tokenized_sentence and \
-                    '</OBJ>' in tokenized_sentence:
-                    
-                    response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
-                    break
+            response = llm_model.generate(query, **generation_kwargs)
+            response_str = llm_tokenizer.decode(response[0])
+            first_sentence = sent_tokenize(response_str)[0]
+            tokenized_sentence = first_sentence.split()    
+            response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
             response_tensors.append(response.squeeze())
         game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
@@ -209,7 +214,7 @@ for epoch in range(2):
 
         #### Run PPO training
         t = time.time()
-        stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
+        stats = ppo_trainer.step(query_tensors[:1], response_tensors, rewards)
 
         for cs in ctrl_str:
             key = "env/reward_" + cs.strip("[]")
