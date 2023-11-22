@@ -215,7 +215,7 @@ for epoch in range(2):
         #### get response from LLM
         response_tensors = []
         for query in tqdm(query_tensors):
-            response = llm_model.generate(query, **generation_kwargs)
+            response = llm_model.generate(query.to(device), **generation_kwargs)
             response_tensors.append(response.squeeze()[-txt_out_len:])
             # response_str = llm_tokenizer.decode(response[0])
             # print(response_str)
