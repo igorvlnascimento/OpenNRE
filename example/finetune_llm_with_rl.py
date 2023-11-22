@@ -103,7 +103,9 @@ def validate_sentence(tokenized_sentence):
         if '</OBJ>' in token:
             second_obj = True
             indexes[3] = i
-    return first_sub and second_sub and first_obj and second_obj, indexes
+    sorted_indexes = indexes[:]
+    sorted_indexes.sort()
+    return first_sub and second_sub and first_obj and second_obj and sorted_indexes == indexes, indexes
 
 def format_sentences(texts):
     sentences_formatted = []
