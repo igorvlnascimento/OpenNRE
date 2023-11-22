@@ -85,27 +85,19 @@ def collator(data):
     return dict((key, [d[key] for d in data]) for key in data[0])
 
 def validate_sentence(tokenized_sentence):
-    first_sub = False
-    second_sub = False
-    first_obj = False
-    second_obj = False
     indexes = [-1, -1, -1, -1]
     for i, token in enumerate(tokenized_sentence):
-        if '<SUB>' in token:
-            first_sub = True
+        if '<SUB>' in token and indexes[0] == -1:
             indexes[0] = i
-        if '</SUB>' in token:
-            second_sub = True
+        if '</SUB>' in token and indexes[1] == -1:
             indexes[1] = i
-        if '<OBJ>' in token:
-            first_obj = True
+        if '<OBJ>' in token and indexes[2] == -1:
             indexes[2] = i
-        if '</OBJ>' in token:
-            second_obj = True
+        if '</OBJ>' in token and indexes[3] == -1:
             indexes[3] = i
     sorted_indexes = indexes[:]
     sorted_indexes.sort()
-    return first_sub and second_sub and first_obj and second_obj and sorted_indexes == indexes, indexes
+    return -1 not in indexes and sorted_indexes == indexes, indexes
 
 def format_sentences(texts):
     sentences_formatted = []
@@ -134,7 +126,7 @@ def extract_output(model, texts):
     labels = []
     for text_formatted in text_sentences_formatted:
         if text_formatted == []:
-            logits.append(torch.tensor(-0.1))
+            logits.append(torch.tensor(-0.5))
             labels.append("none")
         else:
             result = model.infer(text_formatted)
