@@ -164,7 +164,7 @@ MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
 model_name = f"igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning"
 config = PPOConfig(
-    model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb", batch_size=3
+    model_name=model_name, steps=51200, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb"
 )
 
 txt_in_len = 1
@@ -214,7 +214,7 @@ for epoch in range(2):
 
         #### get response from LLM
         response_tensors = []
-        for query in tqdm(query_tensors[:3]):
+        for query in tqdm(query_tensors):
             response = llm_model.generate(query, **generation_kwargs)
             response_tensors.append(response.squeeze()[-txt_out_len:])
             # response_str = llm_tokenizer.decode(response[0])
@@ -233,7 +233,7 @@ for epoch in range(2):
 
         #### Run PPO training
         t = time.time()
-        stats = ppo_trainer.step(query_tensors[:3], response_tensors, rewards)
+        stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
 
         for cs in ctrl_str:
             key = "env/reward_" + cs.strip("[]")
