@@ -126,7 +126,7 @@ def extract_output(model, texts):
     labels = []
     for text_formatted in text_sentences_formatted:
         if text_formatted == []:
-            logits.append(torch.tensor(-0.01))
+            logits.append(torch.tensor(0))
             labels.append("none")
         else:
             result = model.infer(text_formatted)
