@@ -126,7 +126,7 @@ def extract_output(model, texts):
     labels = []
     for text_formatted in text_sentences_formatted:
         if text_formatted == []:
-            logits.append(torch.tensor(0))
+            logits.append(torch.tensor(-1))
             labels.append("none")
         else:
             result = model.infer(text_formatted)
@@ -158,7 +158,7 @@ MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
 model_name = f"igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning"
 config = PPOConfig(
-    model_name=model_name, steps=350000, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb"
+    model_name=model_name, steps=1000000, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb"
 )
 
 txt_in_len = 1
