@@ -139,15 +139,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # this sh
 
 relation_classifier = opennre.get_model(args.classifier, '.')
 
-def label_logit_to_reward(logit, task, labels):
+def label_logit_to_reward(logits, task, labels):
     """
     Take the positive sentiment logit and scale it for the task.
     """
-    for i in range(len(logit)):
+    for i in range(len(logits)):
         if labels[i] == "none":
             pass
         elif task[i] != f"[{labels[i]}]":
-            logit[i] = -logit[i] / 2
+            logits[i] = -(logits[i] / 2)
         elif task[i] == f"[{labels[i]}]":
             pass
         else:
