@@ -4,22 +4,23 @@ import torch
 import opennre
 import argparse
 import numpy as np
-import pandas as pd
 
 from tqdm import tqdm
 from random import choices
 from datasets import Dataset
 from ast import literal_eval
 from pathlib import Path
-from nltk.tokenize import sent_tokenize, word_tokenize
+#from nltk.tokenize import sent_tokenize, word_tokenize
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plts
 
 tqdm.pandas()
 
 from datasets import load_dataset
 
 from transformers import AutoTokenizer
+
+from sentence_transformers import SentenceTransformer, util
 
 from trl import PPOTrainer, PPOConfig, AutoModelForCausalLMWithValueHead, create_reference_model
 
@@ -53,8 +54,6 @@ args = parser.parse_args()
 # Set random seed
 set_seed(args.seed)
 
-np.random.seed(args.seed)
-
 root_path = '.'
 opennre.download(args.dataset, root_path=root_path)
 dataset = load_dataset('text', data_files={"train": [
@@ -70,7 +69,7 @@ dataset = dataset.map(lambda x: {
 ## Preprocess dataset to mask entities with special tokens
 dataset = dataset.map(lambda x: {
     "text": 
-        " ".join(["<s>"] + 
+        " ".join(
         x["text"]["token"][:x["text"]["h"]["pos"][0]] + \
             ['<SUB>'] + x["text"]["token"][x["text"]["h"]["pos"][0]:x["text"]["h"]["pos"][1]] + ['</SUB>'] + \
         x["text"]["token"][x["text"]["h"]["pos"][1]:x["text"]["t"]["pos"][0]] + \
@@ -80,6 +79,22 @@ dataset = dataset.map(lambda x: {
     }
 )
 labels = list(set(dataset['label']))
+
+model_sym = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+
+embeddings_by_relation = {f'{relation}': 
+                          model_sym.encode(
+                              [dict_["text"] for dict_ in dataset
+                              .filter(
+                                  lambda x : x['label'] == relation,
+                                  batched=False
+                                )
+                              .map(
+                                  lambda x : {"text": x["text"]},
+                                  batched=False
+                                )]
+                            ) for relation in labels
+                        }
 
 def collator(data):
     return dict((key, [d[key] for d in data]) for key in data[0])
@@ -97,19 +112,41 @@ def validate_sentence(tokenized_sentence):
             indexes[3] = i
     sorted_indexes = indexes[:]
     sorted_indexes.sort()
-    return -1 not in indexes and sorted_indexes == indexes, indexes
+    return indexes.count(-1) <= 1 and sorted_indexes == indexes, indexes
 
-def format_sentences(texts):
+def format_sentences(texts, relations):
     sentences_formatted = []
-    for text in texts:
+    for i, text in enumerate(texts):
         dict_format = {}
         tokenized_sentence = text.split()
         valid, indexes = validate_sentence(tokenized_sentence)
         if valid:
-            head_entity_start_index = indexes[0]
-            head_entity_end_index = indexes[1] - 1
-            tail_entity_start_index = indexes[2] - 2
-            tail_entity_end_index = indexes[3] - 3
+            if indexes[0] > -1:
+                head_entity_start_index = indexes[0]
+            else:
+                head_entity_start_index = indexes[1] - 1
+
+            if indexes[1] > -1 and indexes[0] > -1:
+                head_entity_end_index = indexes[1] - 1
+            elif indexes[0] == -1:
+                head_entity_end_index = indexes[1]
+            else:
+                head_entity_end_index = indexes[0] + 1
+
+            if indexes[2] > -1 and indexes[1] > -1 and indexes[0] > -1:
+                tail_entity_start_index = indexes[2] - 2
+            elif indexes[2] == -1:
+                tail_entity_start_index = indexes[3] - 3
+            elif indexes[-1] == -1 or indexes[0] == -1:
+                tail_entity_start_index = indexes[2] - 1
+
+            if indexes[3] > -1 and indexes[2] > -1 and indexes[1] > -1 and indexes[0] > -1:
+                tail_entity_end_index = indexes[3] - 3
+            elif indexes[3] == -1:
+                tail_entity_end_index = indexes[2] + 1
+            elif indexes[0] == -1 or indexes[1] == -1 or indexes[2] == -1:
+                tail_entity_end_index = indexes[3] - 2
+
             for i in range(len(indexes) - 1, 0, -1):
                 del tokenized_sentence[indexes[i]]
             dict_format['text'] = " ".join(tokenized_sentence)
@@ -117,20 +154,35 @@ def format_sentences(texts):
             dict_format['t'] = {'pos': [tail_entity_start_index, tail_entity_end_index]}
             sentences_formatted.append(dict_format.copy())
         else:
-            sentences_formatted.append([])
+            print(text)
+            #text_wo_relation = text[text.index(']')+2:]
+            #relation = text[:text.index(']')+1].strip('[]')
+            embedding = model_sym.encode(text)
+            mean_sim = torch.mean(util.pytorch_cos_sim(embedding, embeddings_by_relation[relations[i].strip("[]")]))
+            no_special_tokens_count = indexes.count(-1)
+            sorted_indexes = indexes[:].sort()
+            is_not_sorted_indexes = not sorted_indexes == indexes
+            reward = no_special_tokens_count * .2 + is_not_sorted_indexes * .2 + mean_sim
+            sentences_formatted.append(reward)
     return sentences_formatted
 
-def extract_output(model, texts):
-    text_sentences_formatted = format_sentences(texts)
+def extract_output(model, texts, relations):
+    text_sentences_formatted = format_sentences(texts, relations)
     logits = []
     labels = []
-    for text_formatted in text_sentences_formatted:
-        if text_formatted == []:
-            logits.append(torch.tensor(-0.5))
+    for i, text_formatted in enumerate(text_sentences_formatted):
+        if type(text_formatted) == torch.Tensor:
+            logits.append(torch.tensor(text_formatted))
             labels.append("none")
         else:
+            print(text_formatted)
+            text = text_formatted["text"]
+            relation = relations[i].strip("[]")#text[:text.index(']')+1].strip('[]')
+
+            embedding = model_sym.encode(text)
+            mean_sim = torch.mean(util.pytorch_cos_sim(embedding, embeddings_by_relation[relation]))
             result = model.infer(text_formatted)
-            logits.append(torch.tensor(result[1]).squeeze())
+            logits.append(torch.tensor(result[1]).squeeze() + mean_sim)
             labels.append(result[0])
     return logits, labels
 
@@ -141,15 +193,15 @@ relation_classifier = opennre.get_model(args.classifier, '.')
 
 def label_logit_to_reward(logits, task, labels):
     """
-    Take the positive sentiment logit and scale it for the task.
+    Take the logit and scale it for the task.
     """
     for i in range(len(logits)):
         if labels[i] == "none":
-            pass
+            logits[i] = -logits[i]
         elif task[i] != f"[{labels[i]}]":
-            logits[i] = -(logits[i] / 2)
+            logits[i] = 1 - logits[i]
         elif task[i] == f"[{labels[i]}]":
-            pass
+            logits[i] = logits[i] + 1
         else:
             raise ValueError("task has to be in [0, 1, 2, 3]!")
     return logits
@@ -158,7 +210,7 @@ MODELS_DIR = Path('ckpt')
 MODELS_PATH = MODELS_DIR / args.dataset / args.llm
 model_name = f"igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning"
 config = PPOConfig(
-    model_name=model_name, steps=1000000, learning_rate=1.41e-5, remove_unused_columns=False, log_with="wandb"
+    model_name=model_name, steps=1000000, learning_rate=1.41e-6, remove_unused_columns=False, log_with="wandb"
 )
 
 txt_in_len = 1
@@ -177,7 +229,7 @@ dataset.set_format("pytorch")
 
 ppo_trainer = PPOTrainer(config, llm_model, llm_model_ref, llm_tokenizer, dataset, data_collator=collator)
 
-ctrl_tokens = dict((s, llm_tokenizer.encode(s, return_tensors="pt").squeeze().to(device)) for s in ctrl_str)
+ctrl_tokens = dict((s, llm_tokenizer.encode(s, return_tensors="pt").to(device)) for s in ctrl_str)
 
 if ppo_trainer.accelerator.num_processes == 1:
     device = 0 if torch.cuda.is_available() else "cpu"  # to avoid a `pipeline` bug
@@ -204,25 +256,34 @@ for epoch in range(2):
         #### prepend a random control token
         task_list = choices(ctrl_str, k=config.batch_size)
         game_data["query"] = [t for t in task_list]
-        query_tensors = [llm_tokenizer.encode(query, return_tensors='pt') for query in game_data["query"]]
+        query_tensors = [ctrl_tokens[query] for query in game_data["query"]]
 
         #### get response from LLM
         response_tensors = []
         for query in tqdm(query_tensors):
+            #while True:
             response = llm_model.generate(query.to(device), **generation_kwargs)
-            response_tensors.append(response.squeeze()[-txt_out_len:])
-            # response_str = llm_tokenizer.decode(response[0])
-            # print(response_str)
-            # first_sentence = sent_tokenize(response_str)[0]
+            response_str = llm_tokenizer.decode(response[0])
+            print(response_str)
+                # tokenized_sentence = response_str.split()
+                # valid, _ = validate_sentence(tokenized_sentence)
+                # print(valid)
+                # if valid:
+                #     response_tensors.append(response.squeeze()[-txt_out_len:])
+                #     break
             # tokenized_sentence = first_sentence.split()    
             # response = llm_tokenizer.encode(" ".join(tokenized_sentence), return_tensors="pt")
-            #response_tensors.append(response.squeeze())
+            response_tensors.append(response.squeeze()[-txt_out_len:])
         game_data["response"] = [llm_tokenizer.decode(r.squeeze()) for r in response_tensors]
 
         #### relation extraction
         texts = [r for r in game_data["response"]]
-        logits, labels = extract_output(relation_classifier, texts)
+        print("texts:", texts[0])
+        print(len(texts))
+        logits, labels = extract_output(relation_classifier, texts, task_list)
+        print(len(labels), len(logits))
         rewards = label_logit_to_reward(logits, task_list, labels)
+        print(sum(rewards)/len(rewards))
         query_tensors = [query.squeeze() for query in query_tensors]
 
         #### Run PPO training
