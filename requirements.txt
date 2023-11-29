@@ -16,3 +16,4 @@ gdown
 evaluate
 rouge_score
 wandb
+sentence-transformers
