@@ -2,11 +2,15 @@ import opennre
 import logging
 import argparse
 import nltk
+import torch
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from ast import literal_eval
 from datasets import load_dataset
 from transformers import pipeline, set_seed
+from transformers import AutoTokenizer
+
+from trl import AutoModelForCausalLMWithValueHead
 
 nltk.download('punkt')
 
@@ -23,6 +27,9 @@ parser.add_argument('--dataset', default="none", type=str,
 # LLM
 parser.add_argument('--llm', default="gpt2", type=str,
         help='LLM')
+
+parser.add_argument('--rl', action='store_true', 
+        help='Use RL model')
 
 args = parser.parse_args()
 
@@ -65,20 +72,37 @@ ddataset = dataset.map(lambda x: {
     }
 )
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model_name = f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning'
+if args.rl:
+    model_name = f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning_with_rl'
+llm_model = AutoModelForCausalLMWithValueHead.from_pretrained(model_name).to(device)
+llm_tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+generation_kwargs = {
+    "min_length": -1,
+    "top_k": 0.0,
+    "top_p": 1.0,
+    "do_sample": True,
+    "pad_token_id": llm_tokenizer.eos_token_id,
+    "max_new_tokens": 101,
+    "eos_token_id": -1,
+}
+
 labels = list(set(dataset['train']['label']))
 synthetic_texts = []
 for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
-    generator = pipeline('text-generation', model=f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning')
+    #generator = pipeline('text-generation', model=f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning')
 
     for _ in tqdm(range(len(dataset_label["train"]))):
         while True:
-            generated_text = generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1, pad_token_id=50256)[0]["generated_text"]
-            first_sentence = sent_tokenize(generated_text)[0][generated_text.index(']')+2:]
+            generated_text = llm_model.generate(llm_tokenizer.encode(f"[{relation}] ", return_tensors="pt").to(device), **generation_kwargs)#generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1, pad_token_id=50256)[0]["generated_text"]
+            response_str = llm_tokenizer.decode(generated_text[0])
+            first_sentence = sent_tokenize(response_str)[0][response_str.index(']')+2:]
             tokenized_sentence = first_sentence.split()
-            print(tokenized_sentence)
-            if len(tokenized_sentence) >= 10 and \
+            if len(tokenized_sentence) >= 14 and \
                 '<SUB>' in tokenized_sentence and \
                 '</SUB>' in tokenized_sentence and \
                 '<OBJ>' in tokenized_sentence and \
@@ -88,7 +112,10 @@ for relation in labels:
             else:
                 continue
 
-with open(f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt", "w") as f:
+filename_path = f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt"
+if args.rl:
+    filename_path = f"benchmark/{args.dataset}/rl_synt_{args.dataset}_train.txt"
+with open(filename_path, "w") as f:
     for text in synthetic_texts:
         entity_head_start_idx = text.index('<SUB>')
         entity_head_end_idx = text.index('</SUB>') - 1
