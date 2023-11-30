@@ -9,3 +9,5 @@ wget --no-check-certificate -P ddi 'https://docs.google.com/uc?export=download&i
 wget --no-check-certificate -P ddi 'https://docs.google.com/uc?export=download&id=1VfzaAe9sgfUt_RS-GvhVvb1vfh87cWDE' -O ddi_synt_val.txt
 wget --no-check-certificate -P ddi 'https://docs.google.com/uc?export=download&id=1rEtUYx53sbO-2qX-N0kiGScClFrFO5rV' -O ddi_all_train.txt
 wget --no-check-certificate -P ddi 'https://docs.google.com/uc?export=download&id=1cU8fbgSKhiNF-6k3WDG5n4OtcauFIhCM' -O ddi_all_synt.txt
+wget --no-check-certificate -P ddi 'https://docs.google.com/uc?export=download&id=1M7xlACXHblc84RNKA1heeUnXoWbwG8EF' -O ddi_synt_rl_train.txt
+wget --no-check-certificate -P ddi 'https://docs.google.com/uc?export=download&id=18vx5PHUZ_UJcGkaNgpoMtD1mlVN4j8Sy' -O ddi_synt_rl_val.txt

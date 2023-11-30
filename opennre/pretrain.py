@@ -91,6 +91,8 @@ def download_semeval2018(root_path=default_root_path):
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1HrXuu-v-VaiEcit6ZJVybmhbMUO2pg39' -O benchmark/semeval2018/semeval2018_synt_val.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1bfXDKvg5HZ6Bev7mXTjGZKsu4ZCksGm1' -O benchmark/semeval2018/semeval2018_all_train.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1ZtzaaAofIhuApzi42Y_36SKkVVd3G9K3' -O benchmark/semeval2018/semeval2018_all_synt.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=11VM2HtpcBHtdCbL3J2g9sgT_H3MJ_cGF' -O benchmark/semeval2018/semeval2018_synt_rl_train.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/semeval2018') + ' ' + "'https://docs.google.com/uc?export=download&id=1SjTrXZn7dc8keChd2-ghCZvax-_X5CRT' -O benchmark/semeval2018/semeval2018_synt_rl_val.txt")
 
 def download_ddi(root_path=default_root_path):
     check_root()
@@ -105,6 +107,8 @@ def download_ddi(root_path=default_root_path):
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1VfzaAe9sgfUt_RS-GvhVvb1vfh87cWDE' -O benchmark/ddi/ddi_synt_val.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1rEtUYx53sbO-2qX-N0kiGScClFrFO5rV' -O benchmark/ddi/ddi_all_train.txt")
         os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1cU8fbgSKhiNF-6k3WDG5n4OtcauFIhCM' -O benchmark/ddi/ddi_all_synt.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=1M7xlACXHblc84RNKA1heeUnXoWbwG8EF' -O benchmark/ddi/ddi_synt_rl_train.txt")
+        os.system('wget --no-check-certificate -P ' + os.path.join(root_path, 'benchmark/ddi') + ' ' + "'https://docs.google.com/uc?export=download&id=18vx5PHUZ_UJcGkaNgpoMtD1mlVN4j8Sy' -O benchmark/ddi/ddi_synt_rl_val.txt")
 
 def download_glove(root_path=default_root_path):
     check_root()
