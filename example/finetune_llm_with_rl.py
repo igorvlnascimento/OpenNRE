@@ -80,10 +80,10 @@ dataset = dataset.map(lambda x: {
 )
 labels = list(set(dataset['label']))
 
-model_sym = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+model_sim = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 embeddings_by_relation = {f'{relation}': 
-                          model_sym.encode(
+                          model_sim.encode(
                               [dict_["text"] for dict_ in dataset
                               .filter(
                                   lambda x : x['label'] == relation,
@@ -157,7 +157,7 @@ def format_sentences(texts, relations):
             print(text)
             #text_wo_relation = text[text.index(']')+2:]
             #relation = text[:text.index(']')+1].strip('[]')
-            embedding = model_sym.encode(text)
+            embedding = model_sim.encode(text)
             mean_sim = torch.mean(util.pytorch_cos_sim(embedding, embeddings_by_relation[relations[i].strip("[]")]))
             no_special_tokens_count = indexes.count(-1)
             sorted_indexes = indexes[:].sort()
@@ -179,7 +179,7 @@ def extract_output(model, texts, relations):
             text = text_formatted["text"]
             relation = relations[i].strip("[]")#text[:text.index(']')+1].strip('[]')
 
-            embedding = model_sym.encode(text)
+            embedding = model_sim.encode(text)
             mean_sim = torch.mean(util.pytorch_cos_sim(embedding, embeddings_by_relation[relation]))
             result = model.infer(text_formatted)
             logits.append(torch.tensor(result[1]).squeeze() + mean_sim)

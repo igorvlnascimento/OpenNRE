@@ -8,3 +8,5 @@ wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=do
 wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1HrXuu-v-VaiEcit6ZJVybmhbMUO2pg39' -O semeval2018_synt_val.txt
 wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1bfXDKvg5HZ6Bev7mXTjGZKsu4ZCksGm1' -O semeval2018_all_train.txt
 wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1ZtzaaAofIhuApzi42Y_36SKkVVd3G9K3' -O semeval2018_all_synt.txt
+wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=11VM2HtpcBHtdCbL3J2g9sgT_H3MJ_cGF' -O semeval2018_synt_rl_train.txt
+wget --no-check-certificate -P semeval2018 'https://docs.google.com/uc?export=download&id=1SjTrXZn7dc8keChd2-ghCZvax-_X5CRT' -O semeval2018_synt_rl_val.txt
