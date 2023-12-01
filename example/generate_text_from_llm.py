@@ -115,9 +115,9 @@ for relation in labels:
 assert len(relations) == len(dataset["train"])
 assert len(relations) == len(synthetic_texts)
 
-filename_path = f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt"
+filename_path = f"benchmark/{args.dataset}/{args.dataset}_all_synt.txt"
 if args.rl:
-    filename_path = f"benchmark/{args.dataset}/rl_synt_{args.dataset}_train.txt"
+    filename_path = f"benchmark/{args.dataset}/{args.dataset}_all_synt_rl.txt"
 with open(filename_path, "w") as f:
     for i, text in enumerate(synthetic_texts):
         entity_head_start_idx = text.index('<SUB>')
