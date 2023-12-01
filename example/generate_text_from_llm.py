@@ -129,7 +129,7 @@ with open(filename_path, "w") as f:
         text.remove('<OBJ>')
         text.remove('</OBJ>')
         obj = {'token': text, 
-                'h': {'name': text[entity_head_start_idx:entity_head_end_idx], 'pos': [entity_head_start_idx, entity_head_end_idx]}, 
-                't': {'name': text[entity_tail_start_idx:entity_tail_end_idx], 'pos': [entity_tail_start_idx, entity_tail_end_idx]}, 
+                'h': {'name': " ".join(text[entity_head_start_idx:entity_head_end_idx]), 'pos': [entity_head_start_idx, entity_head_end_idx]}, 
+                't': {'name': " ".join(text[entity_tail_start_idx:entity_tail_end_idx]), 'pos': [entity_tail_start_idx, entity_tail_end_idx]}, 
                 'relation': relations[i]}
         f.write(str(obj) + "\n")
