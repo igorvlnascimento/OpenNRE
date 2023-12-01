@@ -80,17 +80,18 @@ llm_model = AutoModelForCausalLMWithValueHead.from_pretrained(model_name).to(dev
 llm_tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 generation_kwargs = {
-    "min_length": -1,
+    "min_length": 11,
     "top_k": 0.0,
     "top_p": 1.0,
     "do_sample": True,
     "pad_token_id": llm_tokenizer.eos_token_id,
-    "max_new_tokens": 101,
+    "max_new_tokens": 103,
     "eos_token_id": -1,
 }
 
 labels = list(set(dataset['train']['label']))
 synthetic_texts = []
+relations = []
 for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
@@ -108,6 +109,7 @@ for relation in labels:
                 '<OBJ>' in tokenized_sentence and \
                 '</OBJ>' in tokenized_sentence:
                 synthetic_texts.append(tokenized_sentence)
+                relations.append(relation)
                 break
             else:
                 continue
@@ -116,17 +118,17 @@ filename_path = f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt"
 if args.rl:
     filename_path = f"benchmark/{args.dataset}/rl_synt_{args.dataset}_train.txt"
 with open(filename_path, "w") as f:
-    for text in synthetic_texts:
+    for i, text in enumerate(synthetic_texts):
         entity_head_start_idx = text.index('<SUB>')
         entity_head_end_idx = text.index('</SUB>') - 1
         text.remove('<SUB>')
         text.remove('</SUB>')
         entity_tail_start_idx = text.index('<OBJ>')
-        entity_tail_end_idx = text.index('</OBJ>')
+        entity_tail_end_idx = text.index('</OBJ>') - 1
         text.remove('<OBJ>')
         text.remove('</OBJ>')
         obj = {'token': text, 
                 'h': {'name': text[entity_head_start_idx:entity_head_end_idx], 'pos': [entity_head_start_idx, entity_head_end_idx]}, 
                 't': {'name': text[entity_tail_start_idx:entity_tail_end_idx], 'pos': [entity_tail_start_idx, entity_tail_end_idx]}, 
-                'relation': relation}
+                'relation': relations[i]}
         f.write(str(obj) + "\n")
