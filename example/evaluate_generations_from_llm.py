@@ -138,6 +138,12 @@ def calculate_selfBleu(sentences):
 #is_avg, is_std = calculate_inception_score(tokens_train_sentences)
 _, _, F1 = score(predictions, references, lang='en', verbose=True)
 
+if args.synthetic_rl:
+    print(f"\n##### Synthetic #####\n")
+elif args.synthetic:
+    print(f"\n##### Synthetic RL #####\n")
+else:
+    print(f"\n##### Original #####\n")
 print(f"Perplexity mean: {np.mean(ppls)}")
 #print(f"Inception score average: {is_avg}, Inception score Std: {is_std}")
 print(f"BLEU results: {bleu.compute(predictions=predictions, references=references, max_order = 4)}")
