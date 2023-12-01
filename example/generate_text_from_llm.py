@@ -95,11 +95,12 @@ relations = []
 for relation in labels:
     print(relation)
     dataset_label = dataset.filter(lambda x: x["label"] == relation)
-    #generator = pipeline('text-generation', model=f'igorvln/dare_{args.llm}_{args.dataset}_byrelation_finetuning')
+
+    relations.extend([relation] * len(dataset_label["train"]))
 
     for _ in tqdm(range(len(dataset_label["train"]))):
         while True:
-            generated_text = llm_model.generate(llm_tokenizer.encode(f"[{relation}] ", return_tensors="pt").to(device), **generation_kwargs)#generator(f"[{relation}] ", max_length=103, min_length=11, num_return_sequences=1, pad_token_id=50256)[0]["generated_text"]
+            generated_text = llm_model.generate(llm_tokenizer.encode(f"[{relation}] ", return_tensors="pt").to(device), **generation_kwargs)
             response_str = llm_tokenizer.decode(generated_text[0])
             first_sentence = sent_tokenize(response_str)[0][response_str.index(']')+2:]
             tokenized_sentence = first_sentence.split()
@@ -109,10 +110,10 @@ for relation in labels:
                 '<OBJ>' in tokenized_sentence and \
                 '</OBJ>' in tokenized_sentence:
                 synthetic_texts.append(tokenized_sentence)
-                relations.append(relation)
                 break
-            else:
-                continue
+
+assert len(relations) == len(dataset["train"])
+assert len(relations) == len(synthetic_texts)
 
 filename_path = f"benchmark/{args.dataset}/synt_{args.dataset}_train.txt"
 if args.rl:
