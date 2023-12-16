@@ -63,20 +63,23 @@ python setup.py develop
 
 ## Training example
 
-Fine-tuning GPT-2 to be used to the DDI 2013 dataset domain
+Fine-tuning GPT-2 to be used to the DDI 2013 dataset domain:
+``bash
 python example/finetuning_llm.py \
     --llm gpt2 \
     --dataset ddi \
 ```
 
-Fine-tuning GPT-2 on DDI 2013 to generate sentences for each relationship given a query
+Fine-tuning GPT-2 on DDI 2013 to generate sentences for each relationship given a query:
+``bash
 python example/finetuning_llm_per_relation.py \
     --llm gpt2 \
     --dataset ddi \
     --generator_model igorvln/dare_gpt2_ddi_finetuning
 ```
 
-Fine-tuning GPT-2 optimized by reinforcement learning using [TRL|https://github.com/huggingface/trl] framework on DDI 2013
+Fine-tuning GPT-2 optimized by reinforcement learning using [TRL|https://github.com/huggingface/trl] framework on DDI 2013:
+``bash
 python example/finetuning_llm_with_rl.py \
     --dataset ddi \
     --classifier ddi_bert-base-uncased_entity
